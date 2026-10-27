@@ -13,6 +13,8 @@
 - `app/api/rooms/**` — room API: create, snapshot, post order, advance order, SSE events
 - `features/table-order/pricing.ts` — priceOrder(): server-side prices from MENU only; `store.ts` — in-memory RoomStore (rooms, orders, live subscribers, expiry)
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)
+- `features/shop-assistant/km.ts` — all Shop Assistant strings EN/KM (products, colours, zones); `catalog.ts` — CATALOG (20 products, stock), COLORS, ZONES
+- `features/shop-assistant/tools.ts` — searchProducts/checkStock/quoteDelivery/createOrder (Khmer-aware matching); `limits.ts` — per-session/IP/global chat limits (Phnom Penh days)
 - `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
 - `app/dev/ui/` — noindex gallery of shared components for review
