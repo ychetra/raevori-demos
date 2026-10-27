@@ -1,0 +1,309 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap');
+.d{--bg:#f4f1e8;--sf:#fbfaf5;--ln:#e0dbcd;--ln2:#cbc4b4;--fg:#141a15;--mu:#5d655d;--ac:#5f7d48;--pa:#e9e5da;--ink:#0f1310;--isf:#161b17;--iln:#252c26;--ifg:#f2eee4;--imu:#949c94;--iac:#a8c48f;--kh:#e1232e;font-family:Geist,system-ui,sans-serif;color:var(--fg)}
+.d *{box-sizing:border-box}
+.d .km{font-family:'Noto Sans Khmer',Geist,sans-serif}
+.d h2{letter-spacing:-.03em}
+.d .sec{margin:34px 0 14px;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.d .sec h3{font-size:1.25rem;letter-spacing:-.025em;margin:0}
+.d .sec p{margin:0;color:var(--mu);font-size:.85rem}
+.d .stage{background:linear-gradient(160deg,#ebe7dc,#f4f1e8);border:1px solid var(--ln);border-radius:22px;padding:22px;overflow-x:auto}
+.d .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+/* desktop browser frame */
+.d .win{background:var(--bg);border-radius:14px;overflow:hidden;box-shadow:0 30px 60px -30px rgba(20,26,21,.45);border:1px solid var(--ln);min-width:980px}
+.d .bar{background:var(--ink);color:var(--ifg);font-size:12px;padding:8px 18px;display:flex;justify-content:space-between}
+.d .bar a{color:var(--iac);text-decoration:none;font-weight:500}
+/* phones */
+.d .phones{display:flex;gap:22px;min-width:max-content}
+.d .phone{width:250px;height:520px;border-radius:38px;background:#141a15;padding:8px;box-shadow:0 26px 50px -26px rgba(20,26,21,.6);flex:none}
+.d .scr{width:100%;height:100%;border-radius:31px;background:var(--sf);overflow:hidden;position:relative;font-size:12px}
+.d .cap{margin-top:10px;text-align:center;font-size:.8rem;color:var(--mu)}
+.d .chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:500;border:1px solid var(--ln);background:var(--sf);white-space:nowrap}
+.d .chip.on{background:var(--fg);color:var(--sf);border-color:var(--fg)}
+.d .seg{display:inline-flex;background:rgba(255,255,255,.18);border-radius:999px;padding:3px}
+.d .seg span{padding:4px 9px;border-radius:999px;font-size:10.5px;font-weight:600}
+.d .seg .on{background:#fff;color:var(--fg)}
+.d .btn{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:14px;padding:12px;font-weight:600;font-size:12.5px}
+.d .thumb{width:58px;height:58px;border-radius:14px;flex:none;display:grid;place-items:center}
+.d .plus{width:30px;height:30px;border-radius:10px;border:1px solid var(--ln);display:grid;place-items:center;font-size:16px;flex:none}
+.d .muted{color:var(--mu)}
+.d .opt{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.d .opt span{border:1px solid var(--ln);border-radius:10px;padding:7px 10px;font-size:11px}
+.d .opt span.on{border-color:var(--fg);background:var(--fg);color:#fff}
+.d .lbl{font-size:10.5px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.d .tk{border-radius:14px;padding:12px;font-size:12px}
+.d .qr{display:grid;grid-template-columns:repeat(25,1fr);aspect-ratio:1}
+.d .qr i{aspect-ratio:1}
+.d .steps{display:flex;gap:6px}
+.d .steps i{flex:1;height:6px;border-radius:3px;background:var(--ln)}
+.d .bub-u{align-self:flex-end;max-width:80%;background:var(--fg);color:#fff;border-radius:16px 16px 4px 16px;padding:8px 11px}
+.d .bub-a{align-self:flex-start;max-width:86%;background:var(--pa);border-radius:16px 16px 16px 4px;padding:8px 11px}
+.d .card{background:var(--sf);border:1px solid var(--ln);border-radius:14px;overflow:hidden}
+.d .note{margin-top:16px;border:1px solid var(--ln);border-radius:16px;background:var(--sf);padding:14px 16px;font-size:.85rem;color:var(--mu)}
+.d .note b{color:var(--fg)}
+.d .note ul{margin:6px 0 0;padding-left:18px}
+.d .shim{font-size:11.5px;font-weight:500;background:linear-gradient(90deg,#5d655d 30%,#c9cfc6 50%,#5d655d 70%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shim 1.6s linear infinite}@keyframes shim{to{background-position:-200% 0}}
+.d .sw{width:16px;height:16px;border-radius:5px;border:1px solid rgba(0,0,0,.12);display:inline-block}
+</style>
+
+<div class="d">
+<h2>Design v1: Table Order and Shop Assistant</h2>
+<p class="subtitle">Real layouts, real copy, Raevori colours. Tell me what to change. Khmer text still needs your native check.</p>
+
+<!-- ================= TABLE ORDER: KITCHEN (DESKTOP) ================= -->
+<div class="sec"><h3>1 · Table Order: kitchen screen (laptop)</h3><p>What a visitor sees first on desktop. The QR opens the menu on their phone.</p></div>
+<div class="stage">
+<div class="win">
+ <div class="bar"><span>A live demo by <b>Raevori Studio</b></span><a>Build one like this →</a></div>
+ <div style="display:grid;grid-template-columns:330px 1fr;gap:22px;padding:22px">
+  <div style="display:flex;flex-direction:column;gap:14px">
+   <div>
+    <div style="font-size:11px;font-weight:600;color:var(--ac)">Table Order demo</div>
+    <div style="font-size:26px;font-weight:600;letter-spacing:-.04em;line-height:1.05;margin-top:6px">Order from your phone. Watch it land in the kitchen.</div>
+   </div>
+   <div style="background:var(--sf);border:1px solid var(--ln);border-radius:20px;padding:18px;text-align:center">
+    <div class="qr" id="q1" style="width:170px;margin:0 auto"></div>
+    <div style="font-weight:600;margin-top:12px">Scan to order from Table 4</div>
+    <div class="muted" style="font-size:12px;margin-top:3px">Camera app or any QR scanner</div>
+    <div style="margin-top:12px;font-size:12px;border-top:1px solid var(--ln);padding-top:10px">No phone handy? <u>Open the menu here</u></div>
+   </div>
+   <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:12.5px">
+    <li class="row" style="justify-content:flex-start;gap:10px"><b style="width:22px;height:22px;border-radius:7px;background:var(--fg);color:#fff;display:grid;place-items:center;font-size:11px">1</b>Scan and pick a drink</li>
+    <li class="row" style="justify-content:flex-start;gap:10px"><b style="width:22px;height:22px;border-radius:7px;background:var(--fg);color:#fff;display:grid;place-items:center;font-size:11px">2</b>Pay with KHQR (demo, no money moves)</li>
+    <li class="row" style="justify-content:flex-start;gap:10px"><b style="width:22px;height:22px;border-radius:7px;background:var(--fg);color:#fff;display:grid;place-items:center;font-size:11px">3</b>Your ticket appears here instantly</li>
+   </ol>
+  </div>
+  <div style="background:var(--ink);border-radius:20px;padding:18px;color:var(--ifg)">
+   <div class="row" style="margin-bottom:14px"><div><b style="font-size:15px">Lotus Coffee · Kitchen</b><div style="color:var(--imu);font-size:11.5px">Wed 28 Oct · 14:32</div></div><div style="display:flex;gap:18px;font-size:11.5px;color:var(--imu)"><span>Today <b style="color:var(--ifg)">14 orders</b></span><span>Avg wait <b style="color:var(--ifg)">4m</b></span></div></div>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+    <div><div class="row" style="font-size:11.5px;color:var(--imu);margin-bottom:8px"><span>NEW</span><b style="color:var(--ifg)">1</b></div>
+     <div class="tk" style="background:#1d241e;border:1.5px solid var(--iac);box-shadow:0 0 0 4px rgba(168,196,143,.12)">
+      <div class="row"><b style="font-size:14px">Table 4</b><span style="color:var(--iac);font-weight:600">just now</span></div>
+      <div style="margin-top:8px;line-height:1.55">2× Iced latte<br><span style="color:var(--imu)">Large · Less ice · 50% sugar</span><br>1× Butter croissant</div>
+      <div class="row" style="margin-top:10px;font-size:11px;color:var(--imu)"><span>Paid · KHQR</span><b style="color:var(--ifg)">$7.50</b></div>
+      <div class="btn" style="margin-top:10px;background:var(--iac);color:var(--ink);padding:9px">Start preparing</div>
+     </div></div>
+    <div><div class="row" style="font-size:11.5px;color:var(--imu);margin-bottom:8px"><span>PREPARING</span><b style="color:var(--ifg)">1</b></div>
+     <div class="tk" style="background:var(--isf);border:1px solid var(--iln)">
+      <div class="row"><b style="font-size:14px">Table 2</b><span style="color:var(--imu)">3:40</span></div>
+      <div style="margin-top:8px;line-height:1.55">1× Matcha latte<br><span style="color:var(--imu)">Regular · Normal ice</span><br>1× Mango smoothie</div>
+      <div class="btn" style="margin-top:10px;background:transparent;border:1px solid var(--iln);color:var(--ifg);padding:9px">Mark ready</div>
+     </div></div>
+    <div><div class="row" style="font-size:11.5px;color:var(--imu);margin-bottom:8px"><span>READY</span><b style="color:var(--ifg)">1</b></div>
+     <div class="tk" style="background:var(--isf);border:1px solid var(--iln);opacity:.75">
+      <div class="row"><b style="font-size:14px">Table 7</b><span style="color:var(--iac)">Ready</span></div>
+      <div style="margin-top:8px;line-height:1.55">2× Iced Khmer coffee<br><span style="color:var(--imu)">Condensed milk</span></div>
+     </div></div>
+   </div>
+  </div>
+ </div>
+</div>
+</div>
+
+<!-- ================= TABLE ORDER: PHONE FLOW ================= -->
+<div class="sec"><h3>2 · Table Order: customer phone</h3><p>Menu → options → cart → KHQR → live status. Shown in Khmer and English.</p></div>
+<div class="stage"><div class="phones">
+
+ <!-- menu EN -->
+ <div><div class="phone"><div class="scr">
+  <div style="height:118px;background:linear-gradient(140deg,#5f7d48,#24311d);color:#f4f1e8;padding:16px 14px;position:relative">
+   <div class="row"><span style="font-size:10.5px;background:rgba(255,255,255,.16);border-radius:999px;padding:4px 9px">Table 4</span><span class="seg"><span class="on">EN</span><span class="km">ខ្មែរ</span></span></div>
+   <div style="font-size:21px;font-weight:600;letter-spacing:-.03em;margin-top:16px">Lotus Coffee</div>
+   <div style="opacity:.8;font-size:11px">Fresh Khmer coffee since 2019</div>
+  </div>
+  <div style="display:flex;gap:6px;padding:12px 12px 6px;overflow:hidden"><span class="chip on">Coffee</span><span class="chip">Tea</span><span class="chip">Smoothies</span><span class="chip">Bakery</span></div>
+  <div style="padding:4px 12px;display:flex;flex-direction:column;gap:12px">
+   <div class="row"><span style="display:flex;gap:10px;align-items:center"><span class="thumb" style="background:#efe3d2"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M5 6h20l-2.5 25a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#c69a6b"/><path d="M5.6 12h18.8l-1.9 19a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#8a5a36"/><rect x="3" y="3" width="24" height="4" rx="2" fill="#fbfaf5"/><path d="M17 0v6" stroke="#5f7d48" stroke-width="2"/></svg></span><span><b>Iced Khmer coffee</b><br><span class="muted">$2.00 · condensed milk</span></span></span><span class="plus">+</span></div>
+   <div class="row"><span style="display:flex;gap:10px;align-items:center"><span class="thumb" style="background:#f1e7da"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M5 6h20l-2.5 25a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#e8d7c0"/><path d="M5.8 14h18.4l-1.7 17a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#b98557"/><rect x="3" y="3" width="24" height="4" rx="2" fill="#fbfaf5"/></svg></span><span><b>Iced latte</b><br><span class="muted">$2.25</span></span></span><span class="plus" style="background:var(--fg);color:#fff;border-color:var(--fg);font-size:12px;font-weight:600">2</span></div>
+   <div class="row"><span style="display:flex;gap:10px;align-items:center"><span class="thumb" style="background:#e6ecd9"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M5 6h20l-2.5 25a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#dfe8cc"/><path d="M5.8 13h18.4l-1.8 18a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#86a35d"/><rect x="3" y="3" width="24" height="4" rx="2" fill="#fbfaf5"/></svg></span><span><b>Matcha latte</b><br><span class="muted">$2.75</span></span></span><span class="plus">+</span></div>
+   <div class="row"><span style="display:flex;gap:10px;align-items:center"><span class="thumb" style="background:#f3e6d6"><svg width="34" height="24" viewBox="0 0 34 24"><path d="M2 18C6 6 28 6 32 18c-3 3-27 3-30 0z" fill="#d9a65a"/><path d="M9 9l3 10M17 7v12M25 9l-3 10" stroke="#b07a35" stroke-width="1.6"/></svg></span><span><b>Butter croissant</b><br><span class="muted">$2.00</span></span></span><span class="plus">+</span></div>
+  </div>
+  <div style="position:absolute;left:10px;right:10px;bottom:12px;background:var(--fg);color:#fff;border-radius:16px;padding:12px 14px" class="row"><span>2 items · <b>$4.50</b></span><b>View cart →</b></div>
+ </div></div><div class="cap">Menu</div></div>
+
+ <!-- item sheet KM -->
+ <div><div class="phone"><div class="scr" style="background:#8c9089">
+  <div style="position:absolute;inset:auto 0 0 0;height:86%;background:var(--sf);border-radius:24px 24px 0 0;padding:14px">
+   <div style="width:36px;height:4px;border-radius:2px;background:var(--ln2);margin:0 auto 12px"></div>
+   <div class="row" style="justify-content:flex-start;gap:12px"><span class="thumb" style="background:#f1e7da;width:64px;height:64px"><svg width="32" height="36" viewBox="0 0 30 34"><path d="M5 6h20l-2.5 25a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#e8d7c0"/><path d="M5.8 14h18.4l-1.7 17a2 2 0 0 1-2 1.8h-11a2 2 0 0 1-2-1.8z" fill="#b98557"/><rect x="3" y="3" width="24" height="4" rx="2" fill="#fbfaf5"/></svg></span><span class="km"><b style="font-size:15px">ឡាតេទឹកកក</b><br><span class="muted">$2.25 · ៩,២២៥៛</span></span></div>
+   <div style="margin-top:14px" class="km"><div class="lbl km" style="text-transform:none;letter-spacing:0">ទំហំ</div><div class="opt"><span>ធម្មតា</span><span class="on">ធំ +$0.50</span></div></div>
+   <div style="margin-top:12px" class="km"><div class="lbl km" style="text-transform:none;letter-spacing:0">ទឹកកក</div><div class="opt"><span>ធម្មតា</span><span class="on">តិច</span><span>គ្មាន</span></div></div>
+   <div style="margin-top:12px" class="km"><div class="lbl km" style="text-transform:none;letter-spacing:0">ស្ករ</div><div class="opt"><span>100%</span><span>70%</span><span class="on">50%</span><span>0%</span></div></div>
+   <div class="row" style="position:absolute;left:14px;right:14px;bottom:14px;gap:10px">
+    <div class="row" style="border:1px solid var(--ln);border-radius:14px;padding:6px 8px;gap:14px"><span class="plus" style="width:26px;height:26px;border:0">−</span><b>2</b><span class="plus" style="width:26px;height:26px;border:0">+</span></div>
+    <div class="btn km" style="flex:1;background:var(--fg);color:#fff">បន្ថែម · $5.50</div>
+   </div>
+  </div>
+ </div></div><div class="cap">Options (Khmer)</div></div>
+
+ <!-- cart -->
+ <div><div class="phone"><div class="scr" style="padding:16px 14px">
+  <div class="row"><b style="font-size:17px;letter-spacing:-.02em">Your order</b><span class="muted">Table 4</span></div>
+  <div style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
+   <div class="row" style="align-items:flex-start"><span><b>2× Iced latte</b><br><span class="muted">Large · Less ice · 50%</span></span><b>$5.50</b></div>
+   <div class="row" style="align-items:flex-start"><span><b>1× Butter croissant</b><br><span class="muted">Warmed</span></span><b>$2.00</b></div>
+  </div>
+  <div style="border-top:1px solid var(--ln);margin-top:16px;padding-top:12px;display:flex;flex-direction:column;gap:6px">
+   <div class="row muted"><span>Subtotal</span><span>$7.50</span></div>
+   <div class="row"><b style="font-size:15px">Total</b><span style="text-align:right"><b style="font-size:15px">$7.50</b><br><span class="muted" style="font-size:10.5px">30,750៛</span></span></div>
+  </div>
+  <div style="position:absolute;left:14px;right:14px;bottom:14px">
+   <div class="btn" style="background:var(--kh);color:#fff">Pay with KHQR · $7.50</div>
+   <div class="muted" style="text-align:center;font-size:10.5px;margin-top:8px">Any Cambodian bank app. Demo, no money moves.</div>
+  </div>
+ </div></div><div class="cap">Cart</div></div>
+
+ <!-- KHQR -->
+ <div><div class="phone"><div class="scr" style="background:#efe9e9;padding:22px 16px">
+  <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 14px 30px -18px rgba(0,0,0,.35)">
+   <div style="background:var(--kh);color:#fff;padding:12px 16px;position:relative"><b style="font-size:16px;letter-spacing:.04em">KHQR</b><span style="position:absolute;right:0;bottom:-1px;width:0;height:0;border-left:22px solid transparent;border-bottom:22px solid #fff"></span></div>
+   <div style="padding:14px 18px 6px"><div class="muted" style="font-size:11px">Lotus Coffee</div><div style="font-size:24px;font-weight:700;letter-spacing:-.03em">7.50 <span style="font-size:13px;font-weight:500">USD</span></div></div>
+   <div style="border-top:1.5px dashed #e3d6d6;margin:8px 0"></div>
+   <div style="padding:6px 18px 18px"><div class="qr" id="q2" style="width:150px;margin:0 auto"></div></div>
+  </div>
+  <div class="btn" style="margin-top:16px;background:var(--fg);color:#fff">Simulate payment</div>
+  <div style="text-align:center;font-size:10.5px;margin-top:8px" class="muted">Demo, no money moves</div>
+ </div></div><div class="cap">KHQR (simulated)</div></div>
+
+ <!-- status -->
+ <div><div class="phone"><div class="scr" style="padding:18px 16px">
+  <div style="width:52px;height:52px;border-radius:16px;background:var(--ac);display:grid;place-items:center;margin-top:12px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+  <div style="font-size:20px;font-weight:600;letter-spacing:-.03em;margin-top:14px">Paid. The kitchen has it.</div>
+  <div class="muted">Order A12 · Table 4 · $7.50</div>
+  <div style="margin-top:18px" class="steps"><i style="background:var(--ac)"></i><i style="background:var(--ac)"></i><i></i></div>
+  <div class="row" style="margin-top:6px;font-size:10.5px"><span class="muted">Received</span><b>Preparing</b><span class="muted">Ready</span></div>
+  <div style="margin-top:16px;background:var(--pa);border-radius:14px;padding:12px">2× Iced latte<br>1× Butter croissant</div>
+  <div style="position:absolute;left:16px;right:16px;bottom:14px;font-size:11.5px;text-align:center" class="muted">Updates live. <u style="color:var(--fg)">Open kitchen view</u></div>
+ </div></div><div class="cap">Live status</div></div>
+
+</div></div>
+
+<!-- ================= SHOP ASSISTANT DESKTOP ================= -->
+<div class="sec"><h3>3 · Shop Assistant (laptop)</h3><p>Chat on the right; how it plugs into Telegram and Messenger on the left.</p></div>
+<div class="stage">
+<div class="win">
+ <div class="bar"><span>A live demo by <b>Raevori Studio</b></span><a>Build one like this →</a></div>
+ <div style="display:grid;grid-template-columns:1fr 330px;gap:34px;padding:26px 30px;align-items:start">
+  <div>
+   <div style="font-size:11px;font-weight:600;color:var(--ac)">Shop Assistant demo</div>
+   <div style="font-size:30px;font-weight:600;letter-spacing:-.045em;line-height:1.03;margin-top:6px">A salesperson that never sleeps, in Khmer and English.</div>
+   <p class="muted" style="font-size:13.5px;max-width:52ch;margin:10px 0 0">Ask it anything about Mealea Fashion. It checks real stock, quotes delivery and takes the order, then sends a KHQR to pay.</p>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px">
+    <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:14px"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#229ed9"/><path d="M5.5 11.8l11-4.3c.5-.2 1 .1.8.9l-1.9 8.8c-.1.6-.5.8-1 .5l-2.9-2.1-1.4 1.3c-.2.2-.3.3-.6.3l.2-2.9 5.3-4.8c.2-.2 0-.3-.3-.1l-6.6 4.1-2.8-.9c-.6-.2-.6-.6.2-.8z" fill="#fff"/></svg><div style="font-weight:600;margin-top:8px;font-size:13px">Telegram</div><div class="muted" style="font-size:11.5px">Answers in your shop's bot or group</div></div>
+    <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:14px"><svg width="26" height="26" viewBox="0 0 24 24"><defs><linearGradient id="mg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#0866ff"/><stop offset="1" stop-color="#a033ff"/></linearGradient></defs><path d="M12 1.5C6 1.5 1.5 5.9 1.5 11.6c0 3 1.2 5.6 3.3 7.4v3.5l3.2-1.8c1.2.3 2.6.5 4 .5 6 0 10.5-4.4 10.5-10.1S18 1.5 12 1.5z" fill="url(#mg)"/><path d="m5.6 14.6 3.2-5 3 2.3 3.6-2.4-3.2 5-3-2.3z" fill="#fff"/></svg><div style="font-weight:600;margin-top:8px;font-size:13px">Messenger</div><div class="muted" style="font-size:11.5px">Replies to your Facebook Page</div></div>
+    <div style="background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:14px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141a15" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></svg><div style="font-weight:600;margin-top:8px;font-size:13px">Your website</div><div class="muted" style="font-size:11.5px">The chat you're using now</div></div>
+   </div>
+   <div style="margin-top:18px;background:var(--ink);color:var(--ifg);border-radius:18px;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:12px">
+    <div><div style="color:var(--imu);font-size:11px;margin-bottom:6px">What the owner gets on Telegram</div>
+     <div style="background:#1d241e;border-radius:4px 14px 14px 14px;padding:10px 12px;line-height:1.5"><b>New order · $19.50</b><br>Linen shirt · Black · M<br>Delivery Toul Kork · today<br><span style="color:var(--iac);font-weight:600">Paid by KHQR</span></div></div>
+    <div><div style="color:var(--imu);font-size:11px;margin-bottom:6px">Built in</div>
+     <div style="line-height:1.9">Real stock and prices<br>Delivery zones and fees<br>Orders + KHQR payment<br>Hands over to you anytime</div></div>
+   </div>
+  </div>
+  <!-- phone chat (shared with mobile) -->
+  <div class="phone" style="width:330px;height:640px"><div class="scr" style="display:flex;flex-direction:column;background:var(--sf)">
+   <div class="row" style="padding:14px 14px 10px;border-bottom:1px solid var(--ln)"><span style="display:flex;gap:9px;align-items:center"><span style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#5f7d48,#a8c48f);color:#fff;display:grid;place-items:center;font-weight:700">M</span><span><b>Mealea Fashion</b><br><span class="muted" style="font-size:11px">AI assistant · replies instantly</span></span></span><span class="seg" style="background:var(--pa)"><span class="on">EN</span><span class="km">ខ្មែរ</span></span></div>
+   <div style="flex:1;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+    <div class="bub-u km">អាវនេះមានពណ៌ខ្មៅទេ? ទំហំ M</div>
+    <div class="bub-a"><span class="km">មានបាទ! ពណ៌ខ្មៅ ទំហំ M នៅសល់ ៣ ។</span>
+     <div class="card" style="margin-top:8px;display:flex;gap:9px;padding:8px;align-items:center"><span style="width:52px;height:60px;border-radius:9px;background:linear-gradient(160deg,#2b2d2b,#555a55);flex:none"></span><span style="flex:1"><b>Linen shirt</b><br><span class="muted">$18.00</span><div style="display:flex;gap:4px;margin-top:5px"><i class="sw" style="background:#1d1f1d;outline:2px solid var(--fg);outline-offset:1px"></i><i class="sw" style="background:#ece6d8"></i><i class="sw" style="background:#7f8f6a"></i><span class="muted" style="font-size:10.5px;margin-left:4px">S M L</span></div></span></div></div>
+    <div class="bub-u">Deliver to Toul Kork today?</div>
+    <div class="bub-a">Yes, $1.50, arrives this afternoon. Shall I place the order?
+     <div class="card" style="margin-top:8px;padding:10px"><div class="row"><span class="muted">Linen shirt · Black · M</span><span>$18.00</span></div><div class="row" style="margin-top:3px"><span class="muted">Delivery · Toul Kork</span><span>$1.50</span></div><div class="row" style="margin-top:6px;border-top:1px solid var(--ln);padding-top:6px"><b>Total</b><b>$19.50</b></div><div class="btn" style="margin-top:8px;background:var(--kh);color:#fff;padding:9px">Pay with KHQR</div></div></div>
+   </div>
+   <div style="padding:8px 10px 12px;border-top:1px solid var(--ln)">
+    <div style="display:flex;gap:6px;overflow:hidden;margin-bottom:8px"><span class="chip">Red bags under $25?</span><span class="chip km">មានស្បែកជើងទេ?</span></div>
+    <div class="row" style="background:var(--bg);border:1px solid var(--ln);border-radius:16px;padding:6px 6px 6px 12px"><span class="muted">Message Mealea Fashion…</span><span style="width:32px;height:32px;border-radius:11px;background:var(--fg);display:grid;place-items:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    <div class="muted" style="font-size:10px;text-align:center;margin-top:6px">Demo · Don't share personal information</div>
+   </div>
+  </div></div>
+ </div>
+</div>
+</div>
+
+<!-- ================= SHOP ASSISTANT PHONE + BUSY ================= -->
+<div class="sec"><h3>4 · Shop Assistant on a phone, and when the free AI is busy</h3><p>Full-screen chat on phones. If the daily free limit runs out, visitors watch a sample chat instead.</p></div>
+<div class="stage"><div class="phones">
+ <div><div class="phone"><div class="scr" style="display:flex;flex-direction:column">
+  <div style="padding:14px 14px 10px;border-bottom:1px solid var(--ln)"><b>Mealea Fashion</b><br><span class="muted" style="font-size:11px">AI assistant · replies instantly</span></div>
+  <div style="flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:10px">
+   <div class="bub-a">Hi! I'm Mealea Fashion's assistant. Ask me about clothes, sizes, stock or delivery, in Khmer or English.</div>
+   <div class="lbl" style="margin-top:8px">Try asking</div>
+   <span class="chip" style="align-self:flex-start">Do you have this shirt in black, size M?</span>
+   <span class="chip km" style="align-self:flex-start">តើមានកាបូបពណ៌ក្រហមទេ?</span>
+   <span class="chip" style="align-self:flex-start">How much is delivery to Sen Sok?</span>
+  </div>
+  <div style="padding:8px 10px 12px"><div class="row" style="background:var(--bg);border:1px solid var(--ln);border-radius:16px;padding:6px 6px 6px 12px"><span class="muted">Message…</span><span style="width:30px;height:30px;border-radius:10px;background:var(--fg)"></span></div></div>
+ </div></div><div class="cap">First open</div></div>
+
+ <div><div class="phone"><div class="scr" style="display:flex;flex-direction:column">
+  <div style="padding:14px 14px 10px;border-bottom:1px solid var(--ln)"><b>Mealea Fashion</b><br><span class="muted" style="font-size:11px">AI assistant · replies instantly</span></div>
+  <div style="flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:10px">
+   <div class="bub-u">Any red bags under $25?</div>
+   <div class="bub-a" style="padding:10px 13px"><span class="shim">Checking stock…</span></div>
+  </div>
+ </div></div><div class="cap">Typing / checking stock</div></div>
+
+ <div><div class="phone"><div class="scr" style="display:flex;flex-direction:column">
+  <div style="padding:14px 14px 10px;border-bottom:1px solid var(--ln)"><b>Mealea Fashion</b><br><span class="muted" style="font-size:11px">AI assistant</span></div>
+  <div style="flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:10px">
+   <div class="bub-u">Do you ship to Siem Reap?</div>
+   <div style="border:1px solid var(--ln);background:var(--bg);border-radius:16px;padding:14px;text-align:center;margin-top:20px">
+    <b style="font-size:14px">The demo is busy right now</b>
+    <div class="muted" style="margin-top:4px">Today's free AI limit is used up. Watch a real sample chat instead.</div>
+    <div class="btn" style="margin-top:12px;background:var(--fg);color:#fff">Watch a sample chat</div>
+    <div class="muted" style="margin-top:8px;font-size:11px">Want one for your shop? <u style="color:var(--fg)">Talk to Raevori</u></div>
+   </div>
+  </div>
+ </div></div><div class="cap">Busy fallback</div></div>
+</div></div>
+
+<!-- ================= HOME ================= -->
+<div class="sec"><h3>5 · demo.raevori.com home</h3><p>Two big doors. Each card previews the real product.</p></div>
+<div class="stage">
+<div class="win">
+ <div class="bar"><span><b>Raevori Studio</b> · live demos</span><a>raevori.com →</a></div>
+ <div style="padding:34px 34px 30px">
+  <div style="font-size:36px;font-weight:600;letter-spacing:-.05em;line-height:1;max-width:16ch">Don't read about it. Try it on your phone.</div>
+  <p class="muted" style="margin:10px 0 22px;font-size:14px">Two real products built by Raevori Studio in Phnom Penh. Both work in Khmer and English.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+   <div style="border-radius:22px;overflow:hidden;border:1px solid var(--ln);background:var(--sf)">
+    <div style="height:170px;background:linear-gradient(150deg,#5f7d48,#24311d);position:relative;overflow:hidden">
+     <div style="position:absolute;left:26px;top:26px;width:110px;height:200px;border-radius:22px;background:#141a15;padding:5px"><div style="background:var(--sf);border-radius:18px;height:100%;padding:10px;font-size:9px"><b>Lotus Coffee</b><div style="margin-top:8px;height:8px;border-radius:4px;background:var(--pa)"></div><div style="margin-top:6px;height:8px;width:70%;border-radius:4px;background:var(--pa)"></div></div></div>
+     <div style="position:absolute;right:22px;top:30px;width:230px;border-radius:14px;background:var(--ink);padding:12px;color:var(--ifg);font-size:10px"><b>Kitchen</b><div style="margin-top:8px;border:1px solid var(--iac);border-radius:9px;padding:8px">Table 4 · 2× Iced latte<br><span style="color:var(--iac)">just now</span></div></div>
+    </div>
+    <div style="padding:16px 18px"><div class="row"><b style="font-size:17px;letter-spacing:-.02em">Table Order</b><span style="font-size:12px;font-weight:600">Try it →</span></div><div class="muted" style="font-size:12.5px;margin-top:3px">QR menu, KHQR checkout and a live kitchen screen. For cafés and restaurants.</div></div>
+   </div>
+   <div style="border-radius:22px;overflow:hidden;border:1px solid var(--ln);background:var(--sf)">
+    <div style="height:170px;background:linear-gradient(150deg,#e9e5da,#d9dfcd);position:relative;overflow:hidden;padding:22px;display:flex;flex-direction:column;gap:7px;font-size:11px">
+     <div class="bub-u km" style="max-width:60%">អាវនេះមានពណ៌ខ្មៅទេ?</div>
+     <div class="bub-a km" style="background:#fff;max-width:60%">មានបាទ! ទំហំ M នៅសល់ ៣ ។</div>
+     <div class="bub-a" style="background:#fff;max-width:60%">Total $19.50 · <b style="color:var(--kh)">Pay with KHQR</b></div>
+    </div>
+    <div style="padding:16px 18px"><div class="row"><b style="font-size:17px;letter-spacing:-.02em">Shop Assistant</b><span style="font-size:12px;font-weight:600">Try it →</span></div><div class="muted" style="font-size:12.5px;margin-top:3px">AI that sells in Khmer and English, from real stock. For Facebook and Telegram shops.</div></div>
+   </div>
+  </div>
+ </div>
+</div>
+</div>
+
+<div class="note"><b>Design decisions in this version (change anything):</b>
+<ul>
+<li>Raevori's cream, ink and sage colours everywhere, so the demos feel like your work, not a template. The kitchen board is dark like real kitchen screens.</li>
+<li>Menu pictures are custom drawn illustrations in one style (no stock photos, no licences to manage).</li>
+<li>Khmer and English switch instantly with the EN / <span class="km">ខ្មែរ</span> toggle; prices show dollars with riel underneath.</li>
+<li>No status dots anywhere. A shimmering "Checking stock…" line (no bouncing dots) is the only animation besides tickets sliding in.</li>
+<li>Every page has the slim black "A live demo by Raevori Studio · Build one like this →" bar.</li>
+</ul></div>
+</div>
+
+<script>
+(function(){
+ function draw(id,seed,size){var el=document.getElementById(id);if(!el)return;var s=seed,h='',n=25;
+  function r(){s=(s*9301+49297)%233280;return s/233280}
+  function f(x,y){var P=[[0,0],[n-7,0],[0,n-7]];for(var k=0;k<3;k++){var dx=x-P[k][0],dy=y-P[k][1];if(dx>=0&&dx<7&&dy>=0&&dy<7)return(dx==0||dx==6||dy==0||dy==6||(dx>1&&dx<5&&dy>1&&dy<5))?1:0;if(dx>=-1&&dx<8&&dy>=-1&&dy<8)return 0}return -1}
+  for(var y=0;y<n;y++)for(var x=0;x<n;x++){var v=f(x,y);var on=v==-1?r()>.5:v;h+='<i style="background:'+(on?'#141a15':'transparent')+'"></i>'}
+  el.innerHTML=h}
+ draw('q1',11);draw('q2',29);
+})();
+</script>
