@@ -15,6 +15,8 @@
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)
 - `features/shop-assistant/km.ts` — all Shop Assistant strings EN/KM (products, colours, zones); `catalog.ts` — CATALOG (20 products, stock), COLORS, ZONES
 - `features/shop-assistant/tools.ts` — searchProducts/checkStock/quoteDelivery/createOrder (Khmer-aware matching); `limits.ts` — per-session/IP/global chat limits (Phnom Penh days)
+- `features/shop-assistant/model.ts` — ChatModel interface + chat types; `agent.ts` — runTurn() tool loop, cleanHistory(), executeTool(); `gemini.ts` — Gemini adapter, system prompt, tool declarations; `fake-model.ts` — scripted model (CHAT_MODEL=fake); `replay.ts` — the sample chat; `session.ts` — signed ra_s cookie + client IP; `server.ts` — limiter singleton + createModel()
+- `app/api/chat/route.ts` — POST chat turn (limits → runTurn → text + cards)
 - `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
 - `app/dev/ui/` — noindex gallery of shared components for review

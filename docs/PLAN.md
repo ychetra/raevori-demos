@@ -23,7 +23,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 6: Table Order screens
 - [x] Task 7: Table Order end-to-end check
 - [x] Task 8: Shop Assistant domain
-- [ ] Task 9: Chat engine and API
+- [x] Task 9: Chat engine and API
 - [ ] Task 10: Gemini spike (needs `GEMINI_API_KEY` from owner)
 - [ ] Task 11: Shop Assistant screens
 - [ ] Task 12: Shop Assistant end-to-end check

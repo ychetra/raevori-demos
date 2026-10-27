@@ -75,6 +75,16 @@ export const T = {
     "por-senchey": { en: "Por Senchey", km: "ពោធិ៍សែនជ័យ" },
   },
   guest: { en: "Guest", km: "ភ្ញៀវ" },
+  /** The sample chat: replayed when the live assistant is busy, and played by the fake model in tests. */
+  replay: {
+    u1: { en: "Do you have this shirt in black, size M?", km: "អាវនេះមានពណ៌ខ្មៅទេ? ទំហំ M" },
+    a1: { en: "Yes! The linen shirt in black, size M is in stock for $18.00. Would you like it delivered?", km: "មាន! អាវក្រណាត់លីនិន ពណ៌ខ្មៅ ទំហំ M នៅមានក្នុងស្តុក តម្លៃ $18.00។ ចង់ឱ្យយើងដឹកជូនទេ?" },
+    u2: { en: "Can you deliver to Toul Kork today?", km: "ដឹកទៅទួលគោកថ្ងៃនេះបានទេ?" },
+    a2: { en: "Yes, delivery to Toul Kork is $1.50 and arrives this afternoon. Shall I place the order? Any name is fine, this is a demo.", km: "បាន! ដឹកទៅទួលគោកថ្លៃ $1.50 ហើយដល់រសៀលនេះ។ ឱ្យខ្ញុំកម្មង់ជូនទេ? ដាក់ឈ្មោះអ្វីក៏បាន ព្រោះនេះជាការសាកល្បង។" },
+    u3: { en: "Yes please. My name is Dara.", km: "បាទ កម្មង់ទៅ។ ខ្ញុំឈ្មោះ ដារ៉ា។" },
+    a3: { en: "Done! Pay with KHQR below and we'll send it out today.", km: "រួចរាល់! សូមបង់តាម KHQR ខាងក្រោម យើងនឹងដឹកជូនថ្ងៃនេះ។" },
+    end: { en: "That's the end of this sample chat. Want an assistant like this for your shop? Talk to Raevori.", km: "នេះជាចុងបញ្ចប់នៃការជជែកគំរូ។ ចង់បានជំនួយការបែបនេះសម្រាប់ហាងរបស់អ្នកទេ? ទាក់ទង Raevori។" },
+  },
 } satisfies Record<string, unknown>;
 
 export type ProductId = keyof typeof T.products;
