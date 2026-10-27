@@ -150,4 +150,16 @@ describe("history", () => {
     expect(new Set(week.map((s) => dayKey(s.at))).size).toBe(7);
     expect(week[0].at).toBeGreaterThanOrEqual(TODAY - 6 * DAY);
   });
+
+  test("consecutive weekdays are within 20% of each other, so 'vs yesterday' looks like a real café", () => {
+    const start = Date.UTC(2026, 0, 5, -7); // Mon 5 Jan 2026, 00:00 Phnom Penh
+    for (let d = 1; d < 365; d++) {
+      const day = start + d * 86_400_000;
+      const wd = new Date(day + 7 * 3_600_000).getUTCDay();
+      if (wd < 2 || wd > 5) continue; // both this day and the day before are Mon-Fri
+      const a = generateDay(day).length;
+      const b = generateDay(day - 86_400_000).length;
+      expect(Math.abs(a - b) / b).toBeLessThanOrEqual(0.2);
+    }
+  });
 });

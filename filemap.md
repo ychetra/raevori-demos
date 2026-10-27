@@ -20,6 +20,7 @@
 - `app/api/chat/route.ts` — POST chat turn (limits → runTurn → text + cards)
 - `features/shop-assistant/api.ts` — client sendChat(); `ui/` — ShopAssistant (page layout + how-it-works), Chat (messages, suggestions, busy card, replay, KHQR sheet), Cards (product/delivery/order), ProductArt (SVG clothes)
 - `app/shop-assistant/page.tsx` — Shop Assistant page
+- `features/shop-pulse/` — Shop Pulse: `types.ts` (Sale, fromOrder), `time.ts` (Phnom Penh day/hour helpers), `history.ts` (28 days of deterministic sales), `metrics.ts` (kpis, byHour, byDay, topItems, paymentSplit, dailyReport), `km.ts` (all Shop Pulse strings EN/KM)
 - `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
 - `app/dev/ui/` — noindex gallery of shared components for review

@@ -74,7 +74,7 @@ export function generateDay(startMs: number): Sale[] {
   const key = dayKey(start);
   const rng = mulberry32(hash(`lotus:${key}`));
   const wd = weekday(start);
-  const base = int(rng, 76, 115);
+  const base = int(rng, 88, 102); // narrow, so two ordinary weekdays never differ by more than ~16%
   const count = wd === 0 || wd === 6 ? Math.round(base * 1.3) : base;
 
   const drafts = Array.from({ length: count }, () => {
