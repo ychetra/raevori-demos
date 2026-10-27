@@ -9,8 +9,11 @@ const ctx = <T extends object>(p: T) => ({ params: Promise.resolve(p) }) as neve
 const json = (body: unknown) => new Request("http://x/api", { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body) });
 const latte = [{ itemId: "iced-latte", qty: 1, options: {} }];
 
+let ipSeq = 0;
+const roomReq = (ip = `10.1.0.${++ipSeq}`) => new Request("http://x/api/rooms", { method: "POST", headers: { "cf-connecting-ip": ip } });
+
 async function newRoom() {
-  const res = await createRoom();
+  const res = await createRoom(roomReq());
   expect(res.status).toBe(201);
   return ((await res.json()) as { id: string }).id;
 }
@@ -33,6 +36,15 @@ describe("rooms API", () => {
     const res = await getRoom(new Request("http://x"), ctx({ id }));
     expect(res.status).toBe(200);
     expect(((await res.json()) as { orders: unknown[] }).orders).toHaveLength(2);
+  });
+
+  test("one IP gets 20 rooms an hour; the 21st is 429 too_many_rooms, another IP still gets a room", async () => {
+    for (let i = 0; i < 20; i++) expect((await createRoom(roomReq("203.0.113.9"))).status).toBe(201);
+    const res = await createRoom(roomReq("203.0.113.9"));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(await res.json()).toEqual({ error: "too_many_rooms" });
+    expect((await createRoom(roomReq("203.0.113.10"))).status).toBe(201);
   });
 
   test("unknown room is 404 not_found", async () => {

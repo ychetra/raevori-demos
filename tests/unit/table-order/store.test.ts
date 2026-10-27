@@ -57,6 +57,23 @@ describe("room store", () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
+  test("a listener that throws is dropped and does not break the order or other listeners", () => {
+    const store = createMemoryStore();
+    const { id } = store.create();
+    const broken = vi.fn(() => { throw new Error("Invalid state: Controller is already closed"); });
+    const fn = vi.fn();
+    store.subscribe(id, broken);
+    store.subscribe(id, fn);
+    const o = store.addOrder(id, 4, latte);
+    expect(o).toMatchObject({ table: 4, status: "new" });
+    expect(store.get(id)!.orders.some((x) => x.id === o.id)).toBe(true);
+    expect(fn).toHaveBeenCalledWith({ type: "order", order: expect.objectContaining({ id: o.id }) });
+    expect(broken).toHaveBeenCalledTimes(1);
+    expect(store.advance(id, o.id).status).toBe("preparing");
+    expect(broken).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
   test("sweep removes rooms idle for more than 2 hours", () => {
     const c = clock();
     const store = createMemoryStore({ now: c.now });

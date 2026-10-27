@@ -10,18 +10,18 @@
 - `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders hook (SSE + reconnect + closed)
 - `features/table-order/ui/` — Kitchen (laptop board + QR), CustomerApp (phone flow), ItemSheet, MenuArt (SVG illustrations)
 - `app/table-order/page.tsx` — kitchen page; `app/table-order/menu/page.tsx` — phone menu (noindex)
-- `features/table-order/server.ts` — the process-wide store singleton + error→HTTP mapping
+- `features/table-order/server.ts` — the process-wide store singleton, room-creation limiter (20 per IP per rolling hour) + error→HTTP mapping
 - `app/api/rooms/**` — room API: create, snapshot, post order, advance order, SSE events
 - `features/table-order/pricing.ts` — priceOrder(): server-side prices from MENU only; `store.ts` — in-memory RoomStore (rooms, orders, live subscribers, expiry)
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)
 - `features/shop-assistant/km.ts` — all Shop Assistant strings EN/KM (products, colours, zones); `catalog.ts` — CATALOG (20 products, stock), COLORS, ZONES
-- `features/shop-assistant/tools.ts` — searchProducts/checkStock/quoteDelivery/createOrder (Khmer-aware matching); `limits.ts` — per-session/IP/global chat limits (Phnom Penh days)
-- `features/shop-assistant/model.ts` — ChatModel interface + chat types; `agent.ts` — runTurn() tool loop, cleanHistory(), executeTool(); `gemini.ts` — Gemini adapter, system prompt, tool declarations; `fake-model.ts` — scripted model (CHAT_MODEL=fake); `replay.ts` — the sample chat; `session.ts` — signed ra_s cookie + client IP; `server.ts` — limiter singleton + createModel()
+- `features/shop-assistant/tools.ts` — searchProducts/checkStock/quoteDelivery/createOrder (Khmer-aware matching); `limits.ts` — per-session/IP chat limits, per-IP and global model-call budgets (Phnom Penh days)
+- `features/shop-assistant/model.ts` — ChatModel interface + chat types; `agent.ts` — runTurn() tool loop, cleanHistory(), executeTool(); `gemini.ts` — Gemini adapter, system prompt, tool declarations; `fake-model.ts` — scripted model (CHAT_MODEL=fake); `replay.ts` — the sample chat; `session.ts` — signed ra_s cookie; `server.ts` — limiter singleton + createModel()
 - `app/api/chat/route.ts` — POST chat turn (limits → runTurn → text + cards)
 - `features/shop-assistant/api.ts` — client sendChat(); `ui/` — ShopAssistant (page layout + how-it-works), Chat (messages, suggestions, busy card, replay, KHQR sheet), Cards (product/delivery/order), ProductArt (SVG clothes)
 - `app/shop-assistant/page.tsx` — Shop Assistant page
 - `features/shop-pulse/` — Shop Pulse: `types.ts` (Sale, fromOrder), `time.ts` (Phnom Penh day/hour helpers), `history.ts` (28 days of deterministic sales), `metrics.ts` (kpis, byHour, byDay, topItems, paymentSplit, dailyReport), `km.ts` (all Shop Pulse strings EN/KM)
-- `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100
+- `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100; `lib/client-ip.ts` — clientIp() (cf-connecting-ip, then first X-Forwarded-For hop), used by the chat and rooms APIs
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
 - `app/dev/ui/` — noindex gallery of shared components for review
 - `scripts/shot.mjs` — screenshot a URL at a width for design review

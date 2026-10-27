@@ -36,7 +36,17 @@ export function createMemoryStore({ maxRooms = 500, maxOrders = 30, ttlMs = 2 * 
     if (!r) throw new RoomError("not_found");
     return r;
   };
-  const emit = (r: Entry, e: RoomEvent) => r.listeners.forEach((fn) => fn(e));
+  // Each listener is isolated: one that throws (e.g. a dead live stream) is dropped, and the others
+  // still get the event, so an order that was stored is never reported as failed.
+  const emit = (r: Entry, e: RoomEvent) => {
+    for (const fn of [...r.listeners]) {
+      try {
+        fn(e);
+      } catch {
+        r.listeners.delete(fn);
+      }
+    }
+  };
 
   const seed = (r: Entry, table: number, lines: CartLine[], status: Order["status"], minutesAgo: number): Order => {
     const t = now() - minutesAgo * 60_000;

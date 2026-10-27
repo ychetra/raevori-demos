@@ -35,8 +35,3 @@ export function getSession(req: Request): { id: string; setCookie?: string } {
   const secure = new URL(req.url).protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
   return { id: fresh, setCookie: `${COOKIE}=${fresh}.${sign(fresh)}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}` };
 }
-
-/** Cloudflare's visitor IP, else the first X-Forwarded-For hop, else "unknown". */
-export function clientIp(req: Request): string {
-  return req.headers.get("cf-connecting-ip")?.trim() || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-}

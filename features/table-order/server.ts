@@ -1,12 +1,44 @@
 import { PricingError } from "./pricing";
 import { createMemoryStore, RoomError, type RoomStore } from "./store";
 
-const g = globalThis as typeof globalThis & { __roomStore?: RoomStore; __roomSweep?: ReturnType<typeof setInterval> };
+const HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * Rooms each IP may create per rolling hour, so a loop of requests cannot evict everyone's live rooms.
+ * Kept in memory; IPs with no room in the last hour are dropped on each call, which bounds the map.
+ */
+export function createRoomLimiter({ perHour = 20, now = Date.now }: { perHour?: number; now?: () => number } = {}) {
+  const created = new Map<string, number[]>();
+  return {
+    /** Records a room for `ip` and returns true, or returns false (recording nothing) when the IP is over the limit. */
+    allow(ip: string): boolean {
+      const cutoff = now() - HOUR_MS;
+      for (const [key, times] of created) {
+        const recent = times.filter((t) => t > cutoff);
+        if (recent.length) created.set(key, recent);
+        else created.delete(key);
+      }
+      const times = created.get(ip) ?? [];
+      if (times.length >= perHour) return false;
+      created.set(ip, [...times, now()]);
+      return true;
+    },
+    /** How many IPs are being tracked (for tests). */
+    size: () => created.size,
+  };
+}
+
+export type RoomLimiter = ReturnType<typeof createRoomLimiter>;
+
+const g = globalThis as typeof globalThis & { __roomStore?: RoomStore; __roomSweep?: ReturnType<typeof setInterval>; __roomLimiter?: RoomLimiter };
 
 /** One store per server process (survives dev hot reloads). Expired rooms are swept every 5 minutes. */
 export const store: RoomStore = (g.__roomStore ??= createMemoryStore());
 g.__roomSweep ??= setInterval(() => store.sweep(), 5 * 60 * 1000);
 g.__roomSweep.unref?.();
+
+/** One room-creation limiter per server process. */
+export const roomLimiter: RoomLimiter = (g.__roomLimiter ??= createRoomLimiter());
 
 export const err = (status: number, error: string) => Response.json({ error }, { status, headers: { "Cache-Control": "no-store" } });
 

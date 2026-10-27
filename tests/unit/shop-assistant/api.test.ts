@@ -74,7 +74,7 @@ describe("POST /api/chat", () => {
   });
 
   test("the IP comes from cf-connecting-ip, then the first x-forwarded-for", async () => {
-    const { clientIp } = await import("@/features/shop-assistant/session");
+    const { clientIp } = await import("@/lib/client-ip");
     expect(clientIp(new Request("http://x", { headers: { "cf-connecting-ip": "1.1.1.1", "x-forwarded-for": "2.2.2.2" } }))).toBe("1.1.1.1");
     expect(clientIp(new Request("http://x", { headers: { "x-forwarded-for": "2.2.2.2, 3.3.3.3" } }))).toBe("2.2.2.2");
     expect(clientIp(new Request("http://x"))).toBe("unknown");
