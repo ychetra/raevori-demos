@@ -45,6 +45,7 @@ export const T = {
     cash: { en: "Cash", km: "សាច់ប្រាក់" },
     khqr: { en: "KHQR", km: "KHQR" },
     updatesLive: { en: "Updates live", km: "អាប់ដេតផ្ទាល់" },
+    closed: { en: "Closed · opens 7:00", km: "បិទ · បើកម៉ោង ៧:០០" },
     ordersLower: { en: "orders", km: "ការកម្មង់" },
     hour: { en: "Hour", km: "ម៉ោង" },
     day: { en: "Day", km: "ថ្ងៃ" },

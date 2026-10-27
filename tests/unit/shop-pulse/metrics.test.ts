@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { byDay, byHour, dailyReport, kpis, paymentSplit, topItems } from "@/features/shop-pulse/metrics";
+import { byDay, byHour, dailyReport, kpis, paymentSplit, reportDayStart, topItems } from "@/features/shop-pulse/metrics";
 import { PP_OFFSET_MS } from "@/features/shop-pulse/time";
 import { fromOrder, type Sale } from "@/features/shop-pulse/types";
 import { priceOrder } from "@/features/table-order/pricing";
@@ -30,7 +30,7 @@ describe("kpis", () => {
     sale(NOW + 60_000, [["iced-latte", 1]]), // a minute in the future: excluded
   ];
 
-  test("today runs from Phnom Penh midnight to now; yesterday is the same window a day earlier", () => {
+  test("today runs from 07:00 Phnom Penh to now; yesterday is the same window a day earlier", () => {
     const k = kpis(sales, NOW);
     expect(k.today).toEqual({ revenue: 8.25, orders: 3, avg: 2.75 });
     expect(k.yesterday).toEqual({ revenue: 6.25, orders: 2, avg: 3.13 });
@@ -58,6 +58,24 @@ describe("kpis", () => {
     expect(k.change.revenue).toBe(-1);
     expect(k.change.orders).toBe(-1);
   });
+
+  test("overnight (Wed 00:45) today is Tuesday's whole trading day plus the live overnight sale", () => {
+    const night = oct(28, 0, 45);
+    const live = { ...sale(oct(28, 0, 30), [["iced-khmer-coffee", 1]]), live: true as const }; // 2.00 khqr
+    const overnight = [
+      sale(oct(26, 6, 50), [["iced-latte", 4]]), // Sunday's trading day: ignored
+      sale(oct(26, 8, 0), [["iced-latte", 1]]), // Monday 2.25: same time yesterday
+      sale(oct(27, 0, 40), [["americano", 1]]), // Monday's trading day, 00:40: same time yesterday 1.75
+      sale(oct(27, 0, 50), [["americano", 2]]), // Monday's trading day after 00:45: excluded from yesterday
+      sale(oct(27, 7, 0), [["iced-latte", 1, { size: "large" }]]), // Tuesday 07:00: 2.75
+      sale(oct(27, 20, 50), [["americano", 2]], "cash"), // Tuesday 20:50: 3.50 cash
+      live,
+    ];
+    const k = kpis(overnight, night);
+    expect(k.today).toEqual({ revenue: 8.25, orders: 3, avg: 2.75 });
+    expect(k.yesterday).toEqual({ revenue: 4, orders: 2, avg: 2 });
+    expect(k.khqrShare).toBeCloseTo(475 / 825, 10);
+  });
 });
 
 describe("byHour", () => {
@@ -65,7 +83,7 @@ describe("byHour", () => {
   const sales = [
     sale(oct(27, 10, 45), [["iced-latte", 2]]), // yesterday 10h: 4.50 (full hour counts)
     sale(oct(27, 20, 59), [["americano", 1]]), // yesterday 20h: 1.75
-    sale(oct(28, 6, 30), [["americano", 1]]), // before opening: not in any row
+    sale(oct(27, 6, 30), [["americano", 1]]), // Monday's trading day, overnight: not in any row
     sale(oct(28, 7, 10), [["iced-latte", 1]]), // today 7h: 2.25
     sale(oct(28, 7, 50), [["americano", 1]]), // today 7h: 1.75
     sale(oct(28, 10, 5), [["iced-khmer-coffee", 1]]), // today 10h: 2.00
@@ -83,35 +101,67 @@ describe("byHour", () => {
     for (const r of rows.filter((r) => r.hour > 10)) expect(r.today).toBe(0);
     expect(rows.reduce((a, r) => a + r.today, 0)).toBe(6);
     expect(rows.reduce((a, r) => a + r.yesterday, 0)).toBe(6.25);
+    expect(rows.some((r) => r.late)).toBe(false);
+  });
+
+  test("adds a late row (21:00-07:00) when yesterday's trading day sold overnight", () => {
+    const rows = byHour([...sales, sale(oct(28, 6, 30), [["americano", 1]])], NOW);
+    expect(rows.length).toBe(15);
+    expect(rows[14]).toEqual({ hour: 21, late: true, today: 0, yesterday: 1.75 });
+  });
+
+  test("overnight: hours are Tuesday's trading day, the late row holds the live sale", () => {
+    const night = oct(28, 0, 45);
+    const rows = byHour(
+      [
+        sale(oct(26, 22, 0), [["iced-latte", 1]]), // Monday late: yesterday's late row 2.25
+        sale(oct(27, 9, 10), [["americano", 1]]), // Tuesday 9h: 1.75
+        sale(oct(27, 20, 59), [["iced-latte", 1]]), // Tuesday 20h: 2.25
+        sale(oct(28, 0, 30), [["iced-khmer-coffee", 1]]), // Tuesday late: 2.00
+        sale(oct(28, 0, 50), [["iced-khmer-coffee", 1]]), // after now: excluded
+      ],
+      night,
+    );
+    expect(rows.map((r) => r.hour)).toEqual([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]);
+    expect(rows.find((r) => r.hour === 9)).toEqual({ hour: 9, today: 1.75, yesterday: 0 });
+    expect(rows.find((r) => r.hour === 20)).toEqual({ hour: 20, today: 2.25, yesterday: 0 });
+    expect(rows[14]).toEqual({ hour: 21, late: true, today: 2, yesterday: 2.25 });
+  });
+
+  test("the late row stays when only today has late sales (yesterday 0)", () => {
+    const rows = byHour([sale(oct(27, 21, 5), [["americano", 1]])], oct(27, 21, 30));
+    expect(rows[14]).toEqual({ hour: 21, late: true, today: 1.75, yesterday: 0 });
   });
 });
 
 describe("byDay", () => {
-  // 06:30 on 28 Oct in Phnom Penh is still 27 Oct in UTC.
+  // 06:30 on 28 Oct in Phnom Penh is still the 27th's trading day (and 27 Oct in UTC).
   const NOW = oct(28, 6, 30);
 
-  test("splits days at Phnom Penh midnight, oldest first, today last and partial", () => {
+  test("splits trading days at 07:00 Phnom Penh, oldest first, today last and partial", () => {
     expect(new Date(NOW).getUTCDate()).toBe(27);
     const sales = [
-      sale(oct(14, 12), [["iced-latte", 1]]), // 15 days ago: outside 14 days
-      sale(oct(15, 0, 0), [["americano", 1]]), // first minute of the oldest day
-      sale(oct(27, 23, 59), [["iced-latte", 1]]), // 2.25 on the 27th
-      sale(oct(28, 0, 1), [["americano", 1]]), // 1.75 on the 28th
-      sale(oct(28, 6, 0), [["iced-khmer-coffee", 1]]), // 2.00 on the 28th
+      sale(oct(13, 12), [["iced-latte", 1]]), // 15 trading days ago: outside 14 days
+      sale(oct(14, 6, 59), [["iced-latte", 1]]), // the 13th's trading day: outside
+      sale(oct(14, 7, 0), [["americano", 1]]), // first minute of the oldest trading day
+      sale(oct(26, 23, 59), [["iced-latte", 1]]), // 2.25 on the 26th
+      sale(oct(27, 6, 0), [["iced-khmer-coffee", 1]]), // overnight: 2.00 on the 26th
+      sale(oct(27, 7, 0), [["americano", 1]]), // 1.75 on the 27th
+      { ...sale(oct(28, 0, 1), [["iced-khmer-coffee", 1]]), live: true as const }, // live overnight: 2.00 on the 27th
       sale(oct(28, 7, 0), [["iced-latte", 1]]), // after now: excluded
     ];
     const rows = byDay(sales, NOW);
     expect(rows.length).toBe(14);
-    expect(rows[0]).toEqual({ start: oct(15), key: "2026-10-15", revenue: 1.75, orders: 1 });
-    expect(rows[12]).toEqual({ start: oct(27), key: "2026-10-27", revenue: 2.25, orders: 1 });
-    expect(rows[13]).toEqual({ start: oct(28), key: "2026-10-28", revenue: 3.75, orders: 2 });
+    expect(rows[0]).toEqual({ start: oct(14, 7), key: "2026-10-14", revenue: 1.75, orders: 1 });
+    expect(rows[12]).toEqual({ start: oct(26, 7), key: "2026-10-26", revenue: 4.25, orders: 2 });
+    expect(rows[13]).toEqual({ start: oct(27, 7), key: "2026-10-27", revenue: 3.75, orders: 2 });
     expect(rows.slice(1, 12).every((r) => r.revenue === 0 && r.orders === 0)).toBe(true);
     for (let i = 1; i < rows.length; i++) expect(rows[i].start - rows[i - 1].start).toBe(24 * 60 * 60 * 1000);
   });
 
-  test("respects a custom day count", () => {
-    const rows = byDay([], NOW, 3);
-    expect(rows.map((r) => r.key)).toEqual(["2026-10-26", "2026-10-27", "2026-10-28"]);
+  test("respects a custom day count; a new trading day starts at 07:00", () => {
+    expect(byDay([], NOW, 3).map((r) => r.key)).toEqual(["2026-10-25", "2026-10-26", "2026-10-27"]);
+    expect(byDay([], oct(28, 7), 3).map((r) => r.key)).toEqual(["2026-10-26", "2026-10-27", "2026-10-28"]);
   });
 });
 
@@ -169,25 +219,44 @@ describe("paymentSplit", () => {
 describe("dailyReport", () => {
   const sales = [
     sale(oct(26, 12), [["iced-khmer-coffee", 2, { size: "large" }]]), // 5.00 on the 26th
+    sale(oct(27, 6, 59), [["cappuccino", 9]]), // 20.25 overnight: the 26th's trading day (previous)
     sale(oct(27, 7, 30), [["iced-latte", 2]]), // 4.50 khqr
     sale(oct(27, 12), [["americano", 1]], "cash"), // 1.75 cash
     sale(oct(27, 20, 50), [["iced-khmer-coffee", 1]]), // 2.00 khqr
-    sale(oct(28, 7), [["cappuccino", 9]]), // next day: excluded
+    sale(oct(28, 1), [["americano", 1]], "cash"), // overnight: 1.75 cash, still the 27th
+    sale(oct(28, 7), [["cappuccino", 9]]), // next trading day: excluded
   ];
 
-  test("sums the day and compares with the previous full day", () => {
-    const r = dailyReport(sales, oct(27));
+  test("sums the trading day containing dayStart and compares with the previous one", () => {
+    const r = dailyReport(sales, oct(27, 12));
+    expect(dailyReport(sales, oct(27, 7))).toEqual(r);
+    expect(dailyReport(sales, oct(28, 6, 59))).toEqual(r);
     expect(r.key).toBe("2026-10-27");
-    expect(r.revenue).toBe(8.25);
-    expect(r.orders).toBe(3);
-    expect(r.avg).toBe(2.75);
-    expect(r.change).toBeCloseTo(0.65, 10);
+    expect(r.revenue).toBe(10);
+    expect(r.orders).toBe(4);
+    expect(r.avg).toBe(2.5);
     expect(r.best).toEqual({ name: { en: "Iced latte", km: "ឡាតេទឹកកក" }, qty: 2 });
-    expect(r.khqrShare).toBeCloseTo(650 / 825, 10);
+    expect(r.khqrShare).toBeCloseTo(650 / 1000, 10);
+    const prev = dailyReport(sales, oct(26, 12));
+    expect(prev.revenue).toBe(25.25);
+    expect(r.change).toBeCloseTo(10 / 25.25 - 1, 10);
   });
 
   test("an empty day with an empty previous day", () => {
-    expect(dailyReport(sales, oct(24))).toEqual({ key: "2026-10-24", revenue: 0, orders: 0, avg: 0, change: null, best: null, khqrShare: 0 });
+    expect(dailyReport(sales, oct(24, 12))).toEqual({ key: "2026-10-24", revenue: 0, orders: 0, avg: 0, change: null, best: null, khqrShare: 0 });
+  });
+});
+
+describe("reportDayStart", () => {
+  test("the current trading day from 21:00 (overnight included), the previous one before", () => {
+    expect(reportDayStart(oct(28, 7))).toBe(oct(27, 7));
+    expect(reportDayStart(oct(28, 14, 32))).toBe(oct(27, 7));
+    expect(reportDayStart(oct(28, 20, 59))).toBe(oct(27, 7));
+    expect(reportDayStart(oct(28, 21))).toBe(oct(28, 7));
+    expect(reportDayStart(oct(28, 23, 59))).toBe(oct(28, 7));
+    expect(reportDayStart(oct(29, 0, 45))).toBe(oct(28, 7));
+    expect(reportDayStart(oct(29, 6, 59))).toBe(oct(28, 7));
+    expect(reportDayStart(oct(29, 7))).toBe(oct(28, 7));
   });
 });
 

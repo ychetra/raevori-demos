@@ -11,8 +11,8 @@ import { pick, type Lang, type Text } from "@/lib/i18n";
 import { khr, usd } from "@/lib/money";
 import { history } from "../history";
 import { T } from "../km";
-import { byDay, byHour, dailyReport, kpis, topItems } from "../metrics";
-import { DAY_MS, hourOf, startOfDay } from "../time";
+import { byDay, byHour, dailyReport, kpis, reportDayStart, topItems } from "../metrics";
+import { hourOf, isClosed, OPEN_HOUR, tradingDayStart } from "../time";
 import { fromOrder, type Sale } from "../types";
 import { ColumnChart, type Column } from "./ColumnChart";
 import { changeLabel, dayLabel, dayOfMonth, hhmm, pct } from "./format";
@@ -80,9 +80,15 @@ export function ShopPulse() {
                 "\u00a0"
               ) : (
                 <>
-                  {dayLabel(at, lang)} · {hhmm(at)}
+                  {dayLabel(tradingDayStart(at), lang)} · {hhmm(at)}
                   <span className="mx-1.5">·</span>
                   {pick(T.ui.updatesLive, lang)}
+                  {isClosed(at) && (
+                    <>
+                      <span className="mx-1.5">·</span>
+                      <span data-closed className="whitespace-nowrap">{pick(T.ui.closed, lang)}</span>
+                    </>
+                  )}
                 </>
               )}
             </p>
@@ -128,18 +134,21 @@ type DashProps = { sales: Sale[]; at: number; lang: Lang; room: string | null; o
 
 function Dashboard({ sales, at, lang, room, origin, status, fresh }: DashProps) {
   const t = (x: Text) => pick(x, lang);
-  const today = startOfDay(at);
+  // "Today" is the trading day, 07:00 to 07:00: overnight sales count with the evening before.
+  const today = tradingDayStart(at);
+  const closed = isClosed(at);
+  const reportDay = reportDayStart(at);
   const k = useMemo(() => kpis(sales, at), [sales, at]);
   const hours = useMemo(() => byHour(sales, at), [sales, at]);
   const days = useMemo(() => byDay(sales, at, 14), [sales, at]);
   const top = useMemo(() => topItems(sales, today, at + 1, 5), [sales, today, at]);
-  const report = useMemo(() => dailyReport(sales, today - DAY_MS), [sales, today]);
+  const report = useMemo(() => dailyReport(sales, reportDay), [sales, reportDay]);
   const feed = useMemo(() => sales.filter((s) => s.at <= at).slice(-6).reverse(), [sales, at]);
 
   const hourCols: Column[] = hours.map((h) => {
-    const range = `${String(h.hour).padStart(2, "0")}:00–${String(h.hour + 1).padStart(2, "0")}:00`;
+    const range = h.late ? `${h.hour}:00–${String(OPEN_HOUR).padStart(2, "0")}:00` : `${String(h.hour).padStart(2, "0")}:00–${String(h.hour + 1).padStart(2, "0")}:00`;
     return {
-      label: String(h.hour),
+      label: h.late ? `${h.hour}+` : String(h.hour),
       value: h.today,
       compare: h.yesterday,
       tip: (
@@ -155,7 +164,9 @@ function Dashboard({ sales, at, lang, room, origin, status, fresh }: DashProps) 
       cells: [range, usd(h.today), usd(h.yesterday)],
     };
   });
-  const hourIdx = hourOf(at) - 7;
+  // Open: the current hour. Closed: the late column if there is one, else nothing.
+  const lateIdx = hours.findIndex((h) => h.late);
+  const hourIdx = closed ? (lateIdx >= 0 ? lateIdx : null) : hourOf(at) - OPEN_HOUR;
   const yesterdayTotal = hours.reduce((a, h) => a + h.yesterday, 0);
 
   const dayCols: Column[] = days.map((d) => ({
@@ -260,7 +271,7 @@ function Dashboard({ sales, at, lang, room, origin, status, fresh }: DashProps) 
           <div className="mb-1.5 text-[11.5px] text-ink-muted">{t(T.ui.telegramLabel)}</div>
           <div data-report className="rounded-[4px_14px_14px_14px] bg-[#1d241e] px-3 py-2.5 leading-[1.55] tabular-nums">
             <b>
-              {t(T.cafe)} · {dayLabel(today - DAY_MS, lang)}
+              {t(T.cafe)} · {dayLabel(reportDay, lang)}
             </b>
             <br />
             {t(T.ui.sales)} {usd(report.revenue)}

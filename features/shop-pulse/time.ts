@@ -17,3 +17,13 @@ export const hourOf = (ms: number): number => local(ms).getUTCHours();
 
 /** 0 Sunday ... 6 Saturday, Phnom Penh. */
 export const weekday = (ms: number): number => local(ms).getUTCDay();
+
+/** The café opens at 07:00 and closes at 21:00, Phnom Penh. */
+export const OPEN_HOUR = 7;
+export const CLOSE_HOUR = 21;
+
+/** Epoch ms of 07:00 Phnom Penh starting the trading day (07:00 to 07:00 next day) that contains `ms`. */
+export const tradingDayStart = (ms: number): number => startOfDay(ms - OPEN_HOUR * HOUR_MS) + OPEN_HOUR * HOUR_MS;
+
+/** True before opening (00:00-06:59) and after closing (21:00-23:59), Phnom Penh. */
+export const isClosed = (ms: number): boolean => hourOf(ms) < OPEN_HOUR || hourOf(ms) >= CLOSE_HOUR;

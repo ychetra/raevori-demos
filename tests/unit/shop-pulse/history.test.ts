@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { generateDay, history } from "@/features/shop-pulse/history";
-import { dayKey, hourOf, PP_OFFSET_MS, startOfDay, weekday } from "@/features/shop-pulse/time";
+import { dayKey, hourOf, isClosed, OPEN_HOUR, PP_OFFSET_MS, startOfDay, tradingDayStart, weekday } from "@/features/shop-pulse/time";
 import type { Sale } from "@/features/shop-pulse/types";
 import { priceOrder } from "@/features/table-order/pricing";
 
@@ -29,6 +29,28 @@ describe("time", () => {
     expect(startOfDay(earlyMorning)).toBe(pp(2026, 10, 28));
     expect(startOfDay(lateNight)).toBe(pp(2026, 10, 27));
     expect(startOfDay(pp(2026, 10, 28))).toBe(pp(2026, 10, 28));
+  });
+
+  test("tradingDayStart is 07:00 Phnom Penh of the trading day (07:00 to 07:00) containing the instant", () => {
+    expect(OPEN_HOUR).toBe(7);
+    const wed7 = pp(2026, 10, 28, 7);
+    const tue7 = pp(2026, 10, 27, 7);
+    expect(tradingDayStart(pp(2026, 10, 28, 0, 45))).toBe(tue7);
+    expect(tradingDayStart(wed7 - 1000)).toBe(tue7); // 06:59:59
+    expect(tradingDayStart(wed7 - 1)).toBe(tue7);
+    expect(tradingDayStart(wed7)).toBe(wed7);
+    expect(tradingDayStart(pp(2026, 10, 28, 14, 32))).toBe(wed7);
+    expect(tradingDayStart(pp(2026, 10, 28, 23, 59))).toBe(wed7);
+    expect(dayKey(tradingDayStart(pp(2026, 10, 28, 0, 45)))).toBe("2026-10-27");
+  });
+
+  test("isClosed before 07:00 and from 21:00, Phnom Penh", () => {
+    expect(isClosed(pp(2026, 10, 28, 0, 45))).toBe(true);
+    expect(isClosed(pp(2026, 10, 28, 6, 59))).toBe(true);
+    expect(isClosed(pp(2026, 10, 28, 7))).toBe(false);
+    expect(isClosed(pp(2026, 10, 28, 20, 59))).toBe(false);
+    expect(isClosed(pp(2026, 10, 28, 21))).toBe(true);
+    expect(isClosed(pp(2026, 10, 28, 23, 59))).toBe(true);
   });
 
   test("hourOf and weekday use Phnom Penh time", () => {
@@ -143,6 +165,15 @@ describe("history", () => {
     expect(kept.length).toBeGreaterThan(0);
     expect(kept.length).toBeLessThan(today.length);
     expect(ALL.filter((s) => s.at >= TODAY - DAY && s.at < TODAY)).toEqual(generateDay(TODAY - DAY));
+  });
+
+  test("overnight (Wed 00:45) the history still holds Tuesday's full day", () => {
+    const night = pp(2026, 10, 28, 0, 45);
+    const tue = generateDay(pp(2026, 10, 27));
+    const h = history(night);
+    expect(tue.length).toBeGreaterThan(0);
+    expect(h.filter((s) => s.at >= pp(2026, 10, 27) && s.at < pp(2026, 10, 28))).toEqual(tue);
+    expect(h.every((s) => s.at <= night)).toBe(true);
   });
 
   test("respects a custom day count", () => {
