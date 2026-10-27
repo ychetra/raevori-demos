@@ -23,6 +23,8 @@
 - `features/shop-pulse/` — Shop Pulse: `types.ts` (Sale, fromOrder), `time.ts` (Phnom Penh day/hour helpers), `history.ts` (28 days of deterministic sales), `metrics.ts` (kpis, byHour, byDay, topItems, paymentSplit, dailyReport), `km.ts` (all Shop Pulse strings EN/KM)
 - `features/shop-pulse/ui/` — ShopPulse (page body: intro, live dashboard, room + clock wiring), ColumnChart (SVG column chart with step line, tooltip, keyboard, sr-only table), format.ts (Phnom Penh time/date labels, % and change labels)
 - `app/shop-pulse/page.tsx` — Shop Pulse page (noindex with `?room=`)
+- `features/queue/` — Smart Queue: `types.ts` (Ticket, QueueEvent, PREFIX), `store.ts` (in-memory QueueStore: seeded rooms, take/call/recall/leave, position(), waitMinutes()), `server.ts` (store singleton, creation limiter, validation, error→HTTP), `api.ts` (client fetch helpers), `useQueue.ts` (live tickets hook), `km.ts` (all Smart Queue strings EN/KM)
+- `app/api/queues/**` — queue API: create, snapshot, take a ticket, call, recall, leave, SSE events
 - `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100; `lib/client-ip.ts` — clientIp() (cf-connecting-ip, then first X-Forwarded-For hop), used by the chat and rooms APIs
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
 - `app/dev/ui/` — noindex gallery of shared components for review
