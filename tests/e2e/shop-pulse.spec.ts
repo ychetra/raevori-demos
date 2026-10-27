@@ -31,7 +31,8 @@ test("an order posted to the room shows in the live feed and the Orders tile wit
   const order = await res.json();
 
   await expect(feed.locator(`[data-sale="${order.id}"]`)).toContainText("Table 9", { timeout: 1000 });
-  await expect(ordersValue(page)).toHaveText(String(before + 1), { timeout: 1000 });
+  // At least +1: on the real clock a generated history order may also land in the same second.
+  await expect.poll(async () => Number(await ordersValue(page).textContent()), { timeout: 1000 }).toBeGreaterThanOrEqual(before + 1);
   expect(Date.now() - postedAt).toBeLessThan(1000 + 300); // 1 s budget plus polling slack
 });
 

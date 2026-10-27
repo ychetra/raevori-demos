@@ -32,7 +32,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [ ] Task 15: raevori.com work cards and case studies (in `~/raevori-web`) — built and committed locally (raevori-web f35638b); push + IndexNow wait for the owner and the demos deploy
 - [x] Task 16: Shop Pulse domain (spec `docs/SPEC-SHOP-PULSE.md`, added 2026-10-28 at the owner's request for more demos; owner to review)
 - [x] Task 17: Shop Pulse screens
-- [ ] Task 18: Shop Pulse end-to-end check
+- [x] Task 18: Shop Pulse end-to-end check
 - [x] Task 19: Smart Queue domain and API (spec `docs/SPEC-QUEUE.md`, added 2026-10-28 at the owner's request for more demos; owner to review)
 - [ ] Task 20: Smart Queue screens
 - [ ] Task 21: Smart Queue end-to-end check
