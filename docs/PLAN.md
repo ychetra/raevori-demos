@@ -19,7 +19,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 2: Design pass (orchestrator only, needs owner approval)
 - [x] Task 3: Shared UI
 - [x] Task 4: Table Order domain
-- [ ] Task 5: Table Order API and live updates
+- [x] Task 5: Table Order API and live updates
 - [ ] Task 6: Table Order screens
 - [ ] Task 7: Table Order end-to-end check
 - [ ] Task 8: Shop Assistant domain
