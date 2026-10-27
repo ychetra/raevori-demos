@@ -5,10 +5,12 @@
 - `app/globals.css` — brand tokens (copied from raevori-web) and global styles
 - `app/page.tsx` — home page (demo picker)
 - `app/api/health/route.ts` — health check for Coolify/Docker (`ok`)
-- `components/shared/` — UI shared by both demos (added in Task 3)
 - `features/table-order/` — Table Order domain, server store, screens (Tasks 4-6)
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)
-- `lib/` — small shared helpers (i18n)
+- `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100
+- `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
+- `app/dev/ui/` — noindex gallery of shared components for review
+- `scripts/shot.mjs` — screenshot a URL at a width for design review
 - `tests/unit/` — Vitest tests (`npm test`)
 - `tests/e2e/` — Playwright tests (`npm run e2e`; builds and runs the standalone server on :3012)
 - `scripts/start-standalone.mjs` — runs the production build like the Docker image does
