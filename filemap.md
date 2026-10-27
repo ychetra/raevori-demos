@@ -5,7 +5,8 @@
 - `app/globals.css` — brand tokens (copied from raevori-web) and global styles
 - `app/page.tsx` — home page (demo picker)
 - `app/api/health/route.ts` — health check for Coolify/Docker (`ok`)
-- `features/table-order/` — Table Order domain, server store, screens (Tasks 4-6)
+- `features/table-order/types.ts` — Order, CartLine, RoomEvent types; `menu.ts` — MENU (14 items) + option groups; `km.ts` — all Table Order strings EN/KM
+- `features/table-order/pricing.ts` — priceOrder(): server-side prices from MENU only; `store.ts` — in-memory RoomStore (rooms, orders, live subscribers, expiry)
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)
 - `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
