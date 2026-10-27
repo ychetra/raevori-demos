@@ -3,7 +3,8 @@
 - `app/` — Next.js routes (pages and API)
 - `app/layout.tsx` — root layout, fonts (Geist, Noto Sans Khmer), metadata
 - `app/globals.css` — brand tokens (copied from raevori-web) and global styles
-- `app/page.tsx` — home page (demo picker)
+- `app/page.tsx` — home page: headline + two demo cards (previews drawn in markup), canonical `/`
+- `app/robots.ts`, `app/sitemap.ts` — robots.txt (disallow /api/, /dev/) and sitemap (/, /table-order, /shop-assistant); `app/opengraph-image.tsx` — 1200×630 social image
 - `app/api/health/route.ts` — health check for Coolify/Docker (`ok`)
 - `features/table-order/types.ts` — Order, CartLine, RoomEvent types; `menu.ts` — MENU (14 items) + option groups; `km.ts` — all Table Order strings EN/KM
 - `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders hook (SSE + reconnect + closed)
@@ -24,7 +25,7 @@
 - `app/dev/ui/` — noindex gallery of shared components for review
 - `scripts/shot.mjs` — screenshot a URL at a width for design review
 - `tests/unit/` — Vitest tests (`npm test`)
-- `tests/e2e/` — Playwright tests (`npm run e2e`; builds and runs the standalone server on :3012); `table-order.spec.ts` drives a laptop + phone together; `shop-assistant.spec.ts` runs against CHAT_MODEL=fake
+- `tests/e2e/` — Playwright tests (`npm run e2e`; builds and runs the standalone server on :3012); `home.spec.ts` covers home links, robots/sitemap/OG, `?room=` noindex and a keyboard-only Table Order run; `table-order.spec.ts` drives a laptop + phone together; `shop-assistant.spec.ts` runs against CHAT_MODEL=fake
 - `scripts/start-standalone.mjs` — runs the production build like the Docker image does
 - `Dockerfile` — production image for Coolify (Node standalone server on :3000)
 - `docs/SPEC.md` — approved design; `docs/PLAN.md` — task list and status

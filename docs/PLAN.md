@@ -27,7 +27,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [ ] Task 10: Gemini spike (needs `GEMINI_API_KEY` from owner) — waiting for the key; Tasks 11-12 were built on the fake model meanwhile
 - [x] Task 11: Shop Assistant screens
 - [ ] Task 12: Shop Assistant end-to-end check — steps 1-2 done (fake model); step 3 needs the key
-- [ ] Task 13: Home page, SEO, accessibility
+- [x] Task 13: Home page, SEO, accessibility
 - [ ] Task 14: Deploy to demo.raevori.com (needs owner's repo, Coolify app, key)
 - [ ] Task 15: raevori.com work cards and case studies (in `~/raevori-web`)
 
@@ -239,8 +239,8 @@ Behaviour from the spec: messenger-style chat, 3 bilingual suggestion chips, pro
 
 **Files:** Modify `app/page.tsx`, `app/layout.tsx`; create `app/robots.ts`, `app/sitemap.ts`, `app/opengraph-image.png` (or route).
 
-- [ ] **Step 1:** Home per `docs/DESIGN.md`: two large demo cards, link back to raevori.com. Metadata per page; `noindex` on any URL with `?room=`; sitemap lists `/`, `/table-order`, `/shop-assistant`. All animations off under `prefers-reduced-motion`. Every control keyboard-reachable with visible focus.
-- [ ] **Step 2:** e2e: home links to both demos; `robots.txt` and `sitemap.xml` respond 200; keyboard-only run through the menu → cart → pay works. Run all tests → PASS. Commit `feat: home, SEO, accessibility`.
+- [x] **Step 1:** Home per `docs/DESIGN.md`: two large demo cards, link back to raevori.com. Metadata per page; `noindex` on any URL with `?room=`; sitemap lists `/`, `/table-order`, `/shop-assistant`. All animations off under `prefers-reduced-motion`. Every control keyboard-reachable with visible focus.
+- [x] **Step 2:** e2e: home links to both demos; `robots.txt` and `sitemap.xml` respond 200; keyboard-only run through the menu → cart → pay works. Run all tests → PASS. Commit `feat: home, SEO, accessibility`.
 
 ### Task 14: Deploy — orchestrator + light
 

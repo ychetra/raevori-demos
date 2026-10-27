@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { pick, type Lang } from "@/lib/i18n";
 import { khr, usd } from "@/lib/money";
 import { T } from "../km";
@@ -11,12 +11,40 @@ import { artTile, MenuArt } from "./MenuArt";
 export function ItemSheet({ item, lang, onAdd, onClose }: { item: MenuItem; lang: Lang; onAdd: (line: CartLine) => void; onClose: () => void }) {
   const [options, setOptions] = useState<Record<string, string>>(() => Object.fromEntries(item.options.map((g) => [g.id, g.default])));
   const [qty, setQty] = useState(1);
+  const dialog = useRef<HTMLDivElement>(null);
   const unit = item.price + item.options.reduce((s, g) => s + (g.choices.find((c) => c.id === options[g.id])?.delta ?? 0), 0);
 
+  // Keyboard: focus moves into the sheet, Tab stays inside it, Escape closes it, and focus returns to the item afterwards.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    dialog.current?.focus();
+    return () => {
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      onClose();
+    } else if (e.key === "Tab") {
+      const els = dialog.current?.querySelectorAll<HTMLElement>("button:not([disabled])");
+      if (!els?.length) return;
+      const first = els[0];
+      const last = els[els.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
+
   return (
-    <div className="absolute inset-0 z-20 flex flex-col justify-end">
-      <button type="button" aria-label={pick(T.ui.close, lang)} onClick={onClose} className="absolute inset-0 bg-[#141a15]/45 animate-[fade-in_.2s_ease-out]" />
-      <div role="dialog" aria-modal="true" aria-label={pick(item.name, lang)} className="relative max-h-[88%] overflow-y-auto rounded-t-[24px] bg-surface px-4 pt-3.5 pb-4 animate-[sheet-in_.35s_var(--ease-out-expo)]">
+    <div className="absolute inset-0 z-20 flex flex-col justify-end" onKeyDown={onKeyDown}>
+      <button type="button" tabIndex={-1} aria-label={pick(T.ui.close, lang)} onClick={onClose} className="absolute inset-0 bg-[#141a15]/45 animate-[fade-in_.2s_ease-out]" />
+      <div ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label={pick(item.name, lang)} className="relative outline-none max-h-[88%] overflow-y-auto rounded-t-[24px] bg-surface px-4 pt-3.5 pb-4 animate-[sheet-in_.35s_var(--ease-out-expo)]">
         <div className="mx-auto mb-3.5 h-1 w-9 rounded-full bg-line-strong" />
         <div className="flex items-center gap-3">
           <span className="grid size-16 shrink-0 place-items-center rounded-[16px]" style={{ background: artTile(item.image) }}>

@@ -75,6 +75,11 @@ export const T = {
     "por-senchey": { en: "Por Senchey", km: "ពោធិ៍សែនជ័យ" },
   },
   guest: { en: "Guest", km: "ភ្ញៀវ" },
+  /** Khmer chat bubbles in the Shop Assistant card on the home page. */
+  home: {
+    ask: "អាវនេះមានពណ៌ខ្មៅទេ?",
+    answer: "មាន! ទំហំ M នៅមានក្នុងស្តុក។",
+  },
   /** The sample chat: replayed when the live assistant is busy, and played by the fake model in tests. */
   replay: {
     u1: { en: "Do you have this shirt in black, size M?", km: "អាវនេះមានពណ៌ខ្មៅទេ? ទំហំ M" },

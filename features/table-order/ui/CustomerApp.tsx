@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { KhqrCard } from "@/components/shared/KhqrCard";
 import { LangToggle } from "@/components/shared/LangToggle";
 import { PhoneFrame } from "@/components/shared/PhoneFrame";
@@ -41,6 +41,21 @@ export function CustomerApp() {
     if (room) roomExists(room).then((ok) => !ok && setClosed(true)).catch(() => {});
   }, [room]);
 
+  // When the screen changes (menu → cart → pay → status) the button that was pressed is gone,
+  // so move keyboard focus to the new screen's heading instead of dropping it on <body>.
+  const phone = useRef<HTMLDivElement>(null);
+  const shownView = useRef(view);
+  useEffect(() => {
+    if (shownView.current === view) return;
+    shownView.current = view;
+    const h = phone.current?.querySelector<HTMLElement>("h1");
+    if (h) {
+      h.tabIndex = -1;
+      h.style.outline = "none";
+      h.focus({ preventScroll: true });
+    }
+  }, [view]);
+
   const live = useRoom(view === "status" ? room : null);
   const t = (x: Text) => pick(x, lang);
   const priced = useMemo(() => (cart.length ? priceOrder(cart) : { lines: [], total: 0 }), [cart]);
@@ -69,7 +84,7 @@ export function CustomerApp() {
   const order = placed && (live.orders.find((o) => o.id === placed.id) ?? placed);
 
   return (
-    <div lang={lang} className="md:grid md:min-h-[calc(100dvh-36px)] md:place-items-center md:p-6">
+    <div ref={phone} lang={lang} className="md:grid md:min-h-[calc(100dvh-36px)] md:place-items-center md:p-6">
       <PhoneFrame className="h-[calc(100dvh-36px)] md:h-[820px] md:max-h-[calc(100dvh-84px)] md:w-[400px]">
         {closed || live.status === "closed" ? (
           <Closed lang={lang} />

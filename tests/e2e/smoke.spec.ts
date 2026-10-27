@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("home page shows the Raevori name", async ({ page }) => {
+test("home page shows the headline", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Raevori");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Try it on your phone");
 });
 
 test("health check is ok", async ({ request }) => {
