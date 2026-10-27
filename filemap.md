@@ -6,6 +6,9 @@
 - `app/page.tsx` — home page (demo picker)
 - `app/api/health/route.ts` — health check for Coolify/Docker (`ok`)
 - `features/table-order/types.ts` — Order, CartLine, RoomEvent types; `menu.ts` — MENU (14 items) + option groups; `km.ts` — all Table Order strings EN/KM
+- `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders hook (SSE + reconnect + closed)
+- `features/table-order/ui/` — Kitchen (laptop board + QR), CustomerApp (phone flow), ItemSheet, MenuArt (SVG illustrations)
+- `app/table-order/page.tsx` — kitchen page; `app/table-order/menu/page.tsx` — phone menu (noindex)
 - `features/table-order/server.ts` — the process-wide store singleton + error→HTTP mapping
 - `app/api/rooms/**` — room API: create, snapshot, post order, advance order, SSE events
 - `features/table-order/pricing.ts` — priceOrder(): server-side prices from MENU only; `store.ts` — in-memory RoomStore (rooms, orders, live subscribers, expiry)

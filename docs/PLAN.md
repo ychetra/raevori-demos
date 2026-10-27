@@ -20,7 +20,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 3: Shared UI
 - [x] Task 4: Table Order domain
 - [x] Task 5: Table Order API and live updates
-- [ ] Task 6: Table Order screens
+- [x] Task 6: Table Order screens
 - [ ] Task 7: Table Order end-to-end check
 - [ ] Task 8: Shop Assistant domain
 - [ ] Task 9: Chat engine and API
