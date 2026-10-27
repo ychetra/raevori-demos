@@ -16,10 +16,10 @@ export default function Home() {
           Don&apos;t read about it. Try it on your phone.
         </h1>
         <p className="mt-3 mb-6 text-[14px] text-muted sm:text-[15px]">
-          Three real products built by Raevori Studio in Phnom Penh. All work in Khmer and English.
+          Four real products built by Raevori Studio in Phnom Penh. All work in Khmer and English.
         </p>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <DemoCard
             href="/table-order"
             title="Table Order"
@@ -37,7 +37,12 @@ export default function Home() {
             title="Shop Pulse"
             line="Live sales, best sellers and a 9 pm Telegram report. For any shop that takes KHQR."
             preview={<ShopPulsePreview />}
-            className="md:col-span-2 lg:col-span-1"
+          />
+          <DemoCard
+            href="/queue"
+            title="Smart Queue"
+            line="Take a number by QR and get called on your phone. For clinics, repair shops and banks."
+            preview={<SmartQueuePreview />}
           />
         </div>
 
@@ -109,6 +114,33 @@ function ShopAssistantPreview() {
       </div>
       <div className={`${bubble} self-start rounded-[16px_16px_16px_4px] bg-white`}>
         Total $19.50 · <b className="font-semibold text-khqr">Pay with KHQR</b>
+      </div>
+    </div>
+  );
+}
+
+function SmartQueuePreview() {
+  return (
+    <div
+      className="flex h-[170px] items-center justify-center gap-4 overflow-hidden p-[22px] md:h-[200px]"
+      style={{ background: "linear-gradient(150deg,#d9dfcd,#a8b897)" }}
+    >
+      <div className="w-[min(230px,calc(100%-110px))] rounded-[14px] bg-ink p-3 text-ink-fg">
+        <div className="text-[10px] text-ink-muted">Now serving</div>
+        <div className="mt-0.5 text-[38px] leading-none font-semibold tracking-[-0.05em] tabular-nums">R-015</div>
+        <div className="mt-1.5 text-[11px] font-semibold text-ink-accent">→ Counter 1</div>
+        <div className="mt-2.5 flex gap-1.5 text-[10px] text-ink-muted tabular-nums">
+          {["P-007", "R-016", "C-004"].map((n) => (
+            <span key={n} className="rounded-[6px] border border-ink-line px-1.5 py-0.5">{n}</span>
+          ))}
+        </div>
+      </div>
+      <div className="w-[88px] shrink-0 rounded-[18px] bg-fg p-[4px]">
+        <div className="flex h-[120px] flex-col items-center justify-center rounded-[14px] bg-accent px-1.5 text-center text-white">
+          <div className="text-[9.5px] leading-tight font-semibold">Your turn</div>
+          <div className="mt-1 text-[16px] leading-none font-semibold tabular-nums">R-015</div>
+          <div className="mt-1 text-[9px] opacity-85">Counter 1</div>
+        </div>
       </div>
     </div>
   );

@@ -3,8 +3,8 @@
 - `app/` — Next.js routes (pages and API)
 - `app/layout.tsx` — root layout, fonts (Geist, Noto Sans Khmer), metadata
 - `app/globals.css` — brand tokens (copied from raevori-web) and global styles
-- `app/page.tsx` — home page: headline + three demo cards (previews drawn in markup), canonical `/`
-- `app/robots.ts`, `app/sitemap.ts` — robots.txt (disallow /api/, /dev/) and sitemap (/, /table-order, /shop-assistant, /shop-pulse); `app/opengraph-image.tsx` — 1200×630 social image
+- `app/page.tsx` — home page: headline + four demo cards (2×2 from md) (previews drawn in markup), canonical `/`
+- `app/robots.ts`, `app/sitemap.ts` — robots.txt (disallow /api/, /dev/) and sitemap (/, /table-order, /shop-assistant, /shop-pulse, /queue); `app/opengraph-image.tsx` — 1200×630 social image
 - `app/api/health/route.ts` — health check for Coolify/Docker (`ok`)
 - `features/table-order/types.ts` — Order, CartLine, RoomEvent types; `menu.ts` — MENU (14 items) + option groups; `km.ts` — all Table Order strings EN/KM
 - `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders hook (SSE + reconnect + closed)
@@ -25,6 +25,8 @@
 - `app/shop-pulse/page.tsx` — Shop Pulse page (noindex with `?room=`)
 - `features/queue/` — Smart Queue: `types.ts` (Ticket, QueueEvent, PREFIX), `store.ts` (in-memory QueueStore: seeded rooms, take/call/recall/leave, position(), waitMinutes()), `server.ts` (store singleton, creation limiter, validation, error→HTTP), `api.ts` (client fetch helpers), `useQueue.ts` (live tickets hook), `km.ts` (all Smart Queue strings EN/KM)
 - `app/api/queues/**` — queue API: create, snapshot, take a ticket, call, recall, leave, SSE events
+- `features/queue/ui/` — Board (laptop page: intro + QR card + steps, dark waiting-room board, staff bar with call/recall/auto-call, call highlight, 429 message), TicketApp (phone: pick a service, live ticket with position/wait/progress, "It's your turn" overlay, leave with confirm, done/left/closed screens; ticket remembered in sessionStorage per room)
+- `app/queue/page.tsx` — Smart Queue board page (noindex with `?room=`); `app/queue/ticket/page.tsx` — phone ticket page (noindex)
 - `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100; `lib/client-ip.ts` — clientIp() (cf-connecting-ip, then first X-Forwarded-For hop), used by the chat and rooms APIs
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
 - `app/dev/ui/` — noindex gallery of shared components for review

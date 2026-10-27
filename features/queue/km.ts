@@ -1,7 +1,7 @@
 import type { Text } from "@/lib/i18n";
 import type { Service } from "./types";
 
-/** Every Smart Queue string, English and Khmer. Khmer needs the owner's native review. Screen copy is added with the screens. */
+/** Every Smart Queue string, English and Khmer. Khmer needs the owner's native review. */
 export const T = {
   shop: { en: "Sokha Phone Repair", km: "Sokha Phone Repair" },
   services: {
@@ -9,5 +9,93 @@ export const T = {
     pickup: { en: "Pick up", km: "មកយក" },
     payment: { en: "Payment", km: "បង់ប្រាក់" },
   } satisfies Record<Service, Text>,
+  serviceLines: {
+    repair: { en: "Screen, battery, water damage", km: "អេក្រង់ ថ្ម ឬទូរស័ព្ទចូលទឹក" },
+    pickup: { en: "Collect a finished repair", km: "មកយកទូរស័ព្ទដែលជួសជុលរួច" },
+    payment: { en: "Pay a bill or deposit", km: "បង់វិក្កយបត្រ ឬប្រាក់កក់" },
+  } satisfies Record<Service, Text>,
   counter: { en: "Counter", km: "បញ្ជរ" },
+
+  /** The laptop board page. */
+  board: {
+    eyebrow: { en: "Smart Queue demo", km: "ការសាកល្បង Smart Queue" },
+    headline: { en: "Take a number from your phone. Leave the line.", km: "យកលេខរង់ចាំពីទូរស័ព្ទ។ មិនបាច់ឈរតម្រង់ជួរ។" },
+    intro: {
+      en: "A waiting room for Sokha Phone Repair. Customers scan, pick a service and get a number, then wait anywhere. Their phone tells them when it's their turn.",
+      km: "បន្ទប់រង់ចាំសម្រាប់ Sokha Phone Repair។ អតិថិជនស្កេន ជ្រើសសេវា ហើយទទួលលេខ រួចអាចរង់ចាំនៅកន្លែងណាក៏បាន។ ទូរស័ព្ទនឹងប្រាប់ពេលដល់វេនគេ។",
+    },
+    scan: { en: "Scan to take a number", km: "ស្កេនដើម្បីយកលេខ" },
+    scanSub: { en: "Camera app or any QR scanner", km: "កាមេរ៉ា ឬកម្មវិធីស្កេន QR ណាមួយ" },
+    noPhone: { en: "No phone handy?", km: "មិនមានទូរស័ព្ទនៅជិតខ្លួន?" },
+    takeHere: { en: "Take one here", km: "យកលេខនៅទីនេះ" },
+    qrLabel: { en: "QR code to take a number", km: "កូដ QR ដើម្បីយកលេខ" },
+    steps: [
+      { en: "Scan and pick a service", km: "ស្កេន ហើយជ្រើសសេវា" },
+      { en: "Get a number and wait anywhere", km: "ទទួលលេខ ហើយរង់ចាំនៅកន្លែងណាក៏បាន" },
+      { en: "Your phone tells you when it's your turn", km: "ទូរស័ព្ទប្រាប់អ្នកពេលដល់វេន" },
+    ],
+    boardLabel: { en: "Waiting room screen", km: "អេក្រង់បន្ទប់រង់ចាំ" },
+    nowServing: { en: "Now serving", km: "កំពុងបម្រើ" },
+    next: { en: "Next", km: "បន្ទាប់" },
+    nobodyWaiting: { en: "Nobody waiting", km: "គ្មាននរណារង់ចាំទេ" },
+    free: { en: "Free", km: "ទំនេរ" },
+    avgWait: { en: "Average wait", km: "រយៈពេលរង់ចាំជាមធ្យម" },
+    waiting: { en: "Waiting", km: "កំពុងរង់ចាំ" },
+    min: { en: "min", km: "នាទី" },
+    calledTo: { en: "called to", km: "សូមអញ្ជើញទៅ" },
+    staff: { en: "Staff controls", km: "សម្រាប់បុគ្គលិក" },
+    callNext: { en: "Call next", km: "ហៅលេខបន្ទាប់" },
+    recall: { en: "Recall", km: "ហៅម្តងទៀត" },
+    autoCall: { en: "Auto-call every 20 s", km: "ហៅស្វ័យប្រវត្តិរៀងរាល់ ២០ វិនាទី" },
+    closedTitle: { en: "This demo queue has closed", km: "ជួររង់ចាំសាកល្បងនេះបានបិទហើយ" },
+    closedBody: { en: "Demo queues close after two quiet hours.", km: "ជួរសាកល្បងបិទក្រោយគ្មានសកម្មភាពពីរម៉ោង។" },
+    startNew: { en: "Start a new demo", km: "ចាប់ផ្តើមសាកល្បងថ្មី" },
+    tooMany: {
+      en: "Too many demo queues from your network right now. Try again in a while.",
+      km: "បណ្តាញរបស់អ្នកបានបង្កើតជួរសាកល្បងច្រើនពេកហើយ។ សូមសាកម្តងទៀតបន្តិចក្រោយ។",
+    },
+    createFailed: { en: "Couldn't start the demo queue. Check your connection and reload.", km: "មិនអាចចាប់ផ្តើមជួរសាកល្បងបានទេ។ សូមពិនិត្យអ៊ីនធឺណិត ហើយផ្ទុកទំព័រឡើងវិញ។" },
+  },
+
+  /** The customer's phone. */
+  ticket: {
+    takeANumber: { en: "Take a number", km: "យកលេខរង់ចាំ" },
+    pickService: { en: "What do you need today?", km: "ថ្ងៃនេះអ្នកត្រូវការអ្វី?" },
+    waitingNow: { en: "waiting now", km: "នាក់កំពុងរង់ចាំ" },
+    yourNumber: { en: "Your number", km: "លេខរបស់អ្នក" },
+    personAhead: { en: "person ahead", km: "នាក់នៅមុខអ្នក" },
+    peopleAhead: { en: "people ahead", km: "នាក់នៅមុខអ្នក" },
+    youreNext: { en: "You're next", km: "បន្ទាប់គឺអ្នក" },
+    about: { en: "about", km: "ប្រហែល" },
+    anyMinute: { en: "any minute now", km: "បន្តិចទៀតនេះ" },
+    inQueue: { en: "You're in the queue", km: "អ្នកស្ថិតក្នុងជួររង់ចាំហើយ" },
+    almost: { en: "Almost your turn", km: "ជិតដល់វេនអ្នកហើយ" },
+    yourTurn: { en: "Your turn", km: "ដល់វេនអ្នកហើយ" },
+    itsYourTurn: { en: "It's your turn", km: "ដល់វេនអ្នកហើយ" },
+    showNumber: { en: "Show this number at the counter", km: "សូមបង្ហាញលេខនេះនៅបញ្ជរ" },
+    onMyWay: { en: "I'm on my way", km: "ខ្ញុំកំពុងទៅ" },
+    steps: [
+      { en: "Waiting", km: "រង់ចាំ" },
+      { en: "Almost", km: "ជិតដល់" },
+      { en: "Your turn", km: "ដល់វេន" },
+      { en: "Done", km: "រួចរាល់" },
+    ],
+    walkAway: { en: "Wait anywhere. This page updates live.", km: "រង់ចាំនៅកន្លែងណាក៏បាន។ ទំព័រនេះធ្វើបច្ចុប្បន្នភាពភ្លាមៗ។" },
+    telegramNote: { en: "Demo · We'd also send this on Telegram", km: "សាកល្បង · យើងក៏អាចផ្ញើដំណឹងនេះតាម Telegram ដែរ" },
+    leave: { en: "Leave the queue", km: "ចាកចេញពីជួរ" },
+    leaveConfirm: { en: "Leave the queue? You'll lose your place.", km: "ចាកចេញពីជួរមែនទេ? អ្នកនឹងបាត់វេនរបស់អ្នក។" },
+    leaveYes: { en: "Yes, leave", km: "បាទ/ចាស ចាកចេញ" },
+    leaveNo: { en: "Stay in line", km: "នៅក្នុងជួរដដែល" },
+    doneTitle: { en: "All done. Thanks for coming!", km: "រួចរាល់ហើយ។ អរគុណដែលបានមក!" },
+    doneBody: { en: "We hope your phone is as good as new.", km: "សង្ឃឹមថាទូរស័ព្ទរបស់អ្នកដូចថ្មីវិញ។" },
+    leftTitle: { en: "You left the queue", km: "អ្នកបានចាកចេញពីជួរហើយ" },
+    leftBody: { en: "Your number has been released.", km: "លេខរបស់អ្នកត្រូវបានលុបចោលហើយ។" },
+    another: { en: "Take a new number", km: "យកលេខថ្មី" },
+    closedTitle: { en: "This queue has closed", km: "ជួររង់ចាំនេះបានបិទហើយ" },
+    closedBody: { en: "Demo queues close after two quiet hours. Start a fresh one in a second.", km: "ជួរសាកល្បងបិទក្រោយគ្មានសកម្មភាពពីរម៉ោង។ ចាប់ផ្តើមថ្មីបានភ្លាមៗ។" },
+    startNew: { en: "Start a new demo", km: "ចាប់ផ្តើមសាកល្បងថ្មី" },
+    full: { en: "This demo queue is full. Start a new demo to keep playing.", km: "ជួរសាកល្បងនេះពេញហើយ។ សូមចាប់ផ្តើមថ្មី។" },
+    failed: { en: "Couldn't take a number. Check your connection and try again.", km: "មិនអាចយកលេខបានទេ។ សូមពិនិត្យអ៊ីនធឺណិត ហើយសាកម្តងទៀត។" },
+    leaveFailed: { en: "Couldn't leave the queue. Try again.", km: "មិនអាចចាកចេញពីជួរបានទេ។ សូមសាកម្តងទៀត។" },
+  },
 };

@@ -6,9 +6,16 @@ const base = (room: string) => `/api/queues/${encodeURIComponent(room)}`;
 const postJson = (url: string, body?: unknown) =>
   fetch(url, { method: "POST", ...(body !== undefined && { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }) });
 
+/** Thrown by createQueue; `status` is 429 when this network has made too many demo queues. */
+export class CreateQueueError extends Error {
+  constructor(readonly status: number) {
+    super(`create queue ${status}`);
+  }
+}
+
 export async function createQueue(): Promise<string> {
   const res = await fetch("/api/queues", { method: "POST" });
-  if (!res.ok) throw new Error(`create queue ${res.status}`);
+  if (!res.ok) throw new CreateQueueError(res.status);
   return ((await res.json()) as { id: string }).id;
 }
 
