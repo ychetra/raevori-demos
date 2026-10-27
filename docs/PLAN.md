@@ -15,7 +15,7 @@
 Resume rule: tick a task's checkbox only after the orchestrator accepts it and it is committed. A new session continues from the first unticked task.
 
 - [x] Task 0: Spec, plan, CLAUDE.md, git init (orchestrator, 2026-10-27)
-- [ ] Task 1: Scaffold
+- [x] Task 1: Scaffold
 - [ ] Task 2: Design pass (orchestrator only, needs owner approval)
 - [ ] Task 3: Shared UI
 - [ ] Task 4: Table Order domain

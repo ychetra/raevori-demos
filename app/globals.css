@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* Palette copied from raevori-web so the demos read as Raevori's own work. Light by default. */
+:root {
+  --bg: #f4f1e8;
+  --surface: #fbfaf5;
+  --line: #e0dbcd;
+  --line-strong: #cbc4b4;
+  --fg: #141a15;
+  --muted: #5d655d;
+  --accent: #5f7d48;
+  --paper: #e9e5da;
+  --ink: #0f1310;
+  --ink-surface: #161b17;
+  --ink-line: #252c26;
+  --ink-fg: #f2eee4;
+  --ink-muted: #949c94;
+  --ink-accent: #a8c48f;
+  --khqr: #e1232e;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-surface: var(--ink-surface);
+  --color-ink-line: var(--ink-line);
+  --color-ink-fg: var(--ink-fg);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-accent: var(--ink-accent);
+  --color-khqr: var(--khqr);
+  --font-sans: var(--font-geist);
+  --font-khmer: var(--font-khmer), var(--font-geist);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  text-wrap: balance;
+}
+:lang(km) {
+  font-family: var(--font-khmer), var(--font-geist), sans-serif;
+  overflow-wrap: anywhere;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
