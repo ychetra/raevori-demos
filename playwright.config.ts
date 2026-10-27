@@ -15,5 +15,5 @@ export default defineConfig({
   ],
   webServer: process.env.BASE_URL
     ? undefined
-    : { command: "npm run build && npm start -- -p 3012", url: `${baseURL}/api/health`, timeout: 180_000, reuseExistingServer: true },
+    : { command: "npm run build && npm start -- -p 3012", url: `${baseURL}/api/health`, timeout: 180_000, reuseExistingServer: true, env: { CHAT_MODEL: "fake" } },
 });
