@@ -68,6 +68,9 @@ function collect(cards: Card[], fresh: Card[]): Card[] {
   return out.sort((x, y) => order[x.type] - order[y.type]);
 }
 
+/** The cards a list of tool calls produces, exactly as a live turn would gather them (used to replay the sample chat). */
+export const cardsFor = (calls: ToolCall[]): Card[] => calls.reduce<Card[]>((cards, call) => collect(cards, executeTool(call).cards), []);
+
 class Timeout extends Error {}
 
 /** One customer message: ask the model, run the tools it asks for, repeat up to `maxSteps`. Any failure or timeout is "busy". */

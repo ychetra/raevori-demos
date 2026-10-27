@@ -71,7 +71,9 @@ function takeColors(text: string): { colors: Set<ColorId>; rest: string } {
   return { colors, rest };
 }
 
-const productTerms = (p: Product) => [...normalize(p.name.en).split(/[\s-]+/).filter((w) => w.length >= 3), p.name.km];
+// Words that name a whole category ("bag", "shirt") count as category matches, not as a match on one product's name.
+const GENERIC = new Set(["bag", "shirt", "shoe", "dress", "top", "accessory"]);
+const productTerms = (p: Product) => [...normalize(p.name.en).split(/[\s-]+/).filter((w) => w.length >= 3 && !GENERIC.has(w)), p.name.km];
 const categoryTerms = (c: CategoryId) => [...CATEGORY_WORDS[c], normalize(T.cats[c].en), ...T.catWords[c]];
 
 function matchScore(p: Product, text: string): number {
@@ -119,7 +121,9 @@ export function searchProducts(q: { text?: string; category?: string; color?: st
   else if (wanted.size) ranked = pool.map((p) => ({ p, s: colorBoost(p) })).filter((x) => x.s > 0);
   else return hasFilter ? pool.slice(0, MAX_RESULTS) : [];
 
-  return ranked.sort((a, b) => b.s - a.s).slice(0, MAX_RESULTS).map((x) => x.p);
+  // A clear name match ("linen shirt") outranks loose matches (other linen, other tops) by 2 or more, which are then dropped.
+  const top = Math.max(...ranked.map((x) => x.s));
+  return ranked.filter((x) => x.s > top - 2).sort((a, b) => b.s - a.s).slice(0, MAX_RESULTS).map((x) => x.p);
 }
 
 function getProduct(id: unknown): Product {

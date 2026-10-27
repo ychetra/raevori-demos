@@ -25,7 +25,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 8: Shop Assistant domain
 - [x] Task 9: Chat engine and API
 - [ ] Task 10: Gemini spike (needs `GEMINI_API_KEY` from owner)
-- [ ] Task 11: Shop Assistant screens
+- [x] Task 11: Shop Assistant screens
 - [ ] Task 12: Shop Assistant end-to-end check
 - [ ] Task 13: Home page, SEO, accessibility
 - [ ] Task 14: Deploy to demo.raevori.com (needs owner's repo, Coolify app, key)

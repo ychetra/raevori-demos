@@ -62,6 +62,12 @@ describe("searchProducts", () => {
     expect(searchProducts({ text: "Linen Shirt" })[0].id).toBe("linen-shirt");
   });
 
+  test("a specific product name returns that product, not the whole category", () => {
+    expect(ids(searchProducts({ text: "linen shirt", color: "black", size: "M" }))).toEqual(["linen-shirt"]);
+    expect(ids(searchProducts({ text: "អាវក្រណាត់លីនិន" }))).toEqual(["linen-shirt"]);
+    expect(searchProducts({ text: "bag" }).length).toBe(4);
+  });
+
   test("returns at most 4 products", () => {
     expect(searchProducts({}).length).toBe(4);
     expect(searchProducts({ text: "shirt dress bag shoes" }).length).toBeLessThanOrEqual(4);

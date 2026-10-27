@@ -95,3 +95,19 @@ h1, h2, h3 {
     background-position: -200% 0;
   }
 }
+
+/* "Checking stock…": muted text with a light sweep. Under reduced motion it is plain muted text. */
+.shimmer-text {
+  background: linear-gradient(90deg, var(--muted) 30%, #c9cfc6 50%, var(--muted) 70%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 1.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text {
+    background: none;
+    color: var(--muted);
+  }
+}
