@@ -219,6 +219,7 @@ POST /api/chat  body { history: ChatTurn[] } → { text, cards } | 429 { error: 
 Needs `GEMINI_API_KEY` in `.env.local` (owner provides; billing stays off). **Files:** Create `scripts/spike-gemini.ts`, `docs/SPIKE-GEMINI.md`.
 
 - [ ] **Step 1:** Run 12 scripted conversations (6 Khmer, 4 English, 2 mixed) through `runTurn` with the real model; record replies, tool calls, latency, errors, and the current free-tier RPM/RPD for the chosen Flash model from Google's docs.
+- [ ] **Step 1b (from the review):** pin a concrete model id (not `-latest`); set `thinkingConfig` for that model (`thinkingBudget` 0/low on 2.5, `thinkingLevel` LOW/MINIMAL on 3.x) with a matching `maxOutputTokens`; log `finishReason`, `usageMetadata.thoughtsTokenCount` and per-call latency; add a unit test (mocked `generateContent`) that the config is sent. Exit only when no reply is empty/truncated and a 2-tool turn fits well inside 15 s.
 - [ ] **Step 2:** Orchestrator reads the transcripts. Pass = correct tool use in ≥ 11/12, natural Khmer in ≥ 5/6, median latency < 6 s. On fail: stop and ask the owner. On pass: set `CHAT_GLOBAL_DAILY_CAP` below the free daily limit, record it in the doc, commit `docs: gemini spike`.
 
 ### Task 11: Shop Assistant screens — tier: medium
