@@ -94,4 +94,13 @@ describe("createLimiter", () => {
     const lim = createLimiter({ globalDay: 200, perIpModelDay: 2 });
     expect([lim.countModelCall("a"), lim.countModelCall("a"), lim.countModelCall("a")]).toEqual([true, true, false]);
   });
+
+  test("requests with no known IP are not held to per-IP limits; session and global limits still apply", () => {
+    const lim = createLimiter({ perIpDay: 1, perSession: 3, globalDay: 8 });
+    for (let i = 0; i < 5; i++) expect(lim.check(`s${i}`, "unknown", "hi")).toEqual({ ok: true });
+    for (let i = 0; i < 8; i++) expect(lim.countModelCall("unknown")).toBe(true);
+    expect(lim.countModelCall("unknown")).toBe(false);
+    for (let i = 0; i < 3; i++) lim.check("same", "unknown", "hi");
+    expect(lim.check("same", "unknown", "hi")).toMatchObject({ ok: false });
+  });
 });

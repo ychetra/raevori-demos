@@ -1,3 +1,4 @@
+import { UNKNOWN_IP } from "@/lib/client-ip";
 import { PricingError } from "./pricing";
 import { createMemoryStore, RoomError, type RoomStore } from "./store";
 
@@ -12,6 +13,7 @@ export function createRoomLimiter({ perHour = 20, now = Date.now }: { perHour?: 
   return {
     /** Records a room for `ip` and returns true, or returns false (recording nothing) when the IP is over the limit. */
     allow(ip: string): boolean {
+      if (ip === UNKNOWN_IP) return true; // no proxy header: local run or test, never production
       const cutoff = now() - HOUR_MS;
       for (const [key, times] of created) {
         const recent = times.filter((t) => t > cutoff);

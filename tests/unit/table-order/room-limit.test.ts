@@ -29,6 +29,11 @@ describe("createRoomLimiter", () => {
     expect([lim.allow("a"), lim.allow("a"), lim.allow("a")]).toEqual([true, true, false]);
   });
 
+  test("requests with no known IP (local runs and tests, no proxy header) are not limited", () => {
+    const lim = createRoomLimiter({ perHour: 2, now: clock().now });
+    for (let i = 0; i < 10; i++) expect(lim.allow("unknown")).toBe(true);
+  });
+
   test("different IPs are independent", () => {
     const lim = createRoomLimiter({ perHour: 20, now: clock().now });
     for (let i = 0; i < 20; i++) lim.allow("1.1.1.1");

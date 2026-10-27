@@ -1,3 +1,5 @@
+import { UNKNOWN_IP } from "@/lib/client-ip";
+
 export type LimitReason = "session" | "ip" | "global" | "length";
 
 const PHNOM_PENH_OFFSET_MS = 7 * 60 * 60 * 1000; // UTC+7 all year, no daylight saving
@@ -40,11 +42,12 @@ export function createLimiter(
       roll();
       if ([...text].length > maxChars) return { ok: false, reason: "length" };
       if (modelCalls >= globalDay) return { ok: false, reason: "global" };
-      if ((ipModelCalls.get(ip) ?? 0) >= perIpModelDay) return { ok: false, reason: "ip" };
+      const limitIp = ip !== UNKNOWN_IP;
+      if (limitIp && (ipModelCalls.get(ip) ?? 0) >= perIpModelDay) return { ok: false, reason: "ip" };
       const s = sessions.get(session) ?? 0;
       if (s >= perSession) return { ok: false, reason: "session" };
       const i = ips.get(ip) ?? 0;
-      if (i >= perIpDay) return { ok: false, reason: "ip" };
+      if (limitIp && i >= perIpDay) return { ok: false, reason: "ip" };
       sessions.set(session, s + 1);
       ips.set(ip, i + 1);
       return { ok: true };
@@ -53,7 +56,7 @@ export function createLimiter(
     countModelCall(ip: string): boolean {
       roll();
       const i = ipModelCalls.get(ip) ?? 0;
-      if (modelCalls >= globalDay || i >= perIpModelDay) return false;
+      if (modelCalls >= globalDay || (ip !== UNKNOWN_IP && i >= perIpModelDay)) return false;
       ipModelCalls.set(ip, i + 1);
       modelCalls++;
       return true;
