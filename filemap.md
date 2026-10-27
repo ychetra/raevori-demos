@@ -18,7 +18,7 @@
 - `app/dev/ui/` — noindex gallery of shared components for review
 - `scripts/shot.mjs` — screenshot a URL at a width for design review
 - `tests/unit/` — Vitest tests (`npm test`)
-- `tests/e2e/` — Playwright tests (`npm run e2e`; builds and runs the standalone server on :3012)
+- `tests/e2e/` — Playwright tests (`npm run e2e`; builds and runs the standalone server on :3012); `table-order.spec.ts` drives a laptop + phone together
 - `scripts/start-standalone.mjs` — runs the production build like the Docker image does
 - `Dockerfile` — production image for Coolify (Node standalone server on :3000)
 - `docs/SPEC.md` — approved design; `docs/PLAN.md` — task list and status
