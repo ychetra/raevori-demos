@@ -33,7 +33,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 16: Shop Pulse domain (spec `docs/SPEC-SHOP-PULSE.md`, added 2026-10-28 at the owner's request for more demos; owner to review)
 - [x] Task 17: Shop Pulse screens
 - [ ] Task 18: Shop Pulse end-to-end check
-- [ ] Task 19: Smart Queue domain and API (spec `docs/SPEC-QUEUE.md`, added 2026-10-28 at the owner's request for more demos; owner to review)
+- [x] Task 19: Smart Queue domain and API (spec `docs/SPEC-QUEUE.md`, added 2026-10-28 at the owner's request for more demos; owner to review)
 - [ ] Task 20: Smart Queue screens
 - [ ] Task 21: Smart Queue end-to-end check
 
