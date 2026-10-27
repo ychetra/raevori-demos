@@ -1,10 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-test("home links to both demos and back to raevori.com", async ({ page }) => {
+test("home links to all three demos and back to raevori.com", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Don't read about it. Try it on your phone.");
   await expect(page.getByRole("link", { name: /Table Order/ })).toHaveAttribute("href", "/table-order");
   await expect(page.getByRole("link", { name: /Shop Assistant/ })).toHaveAttribute("href", "/shop-assistant");
+  await expect(page.getByRole("link", { name: /Shop Pulse/ })).toHaveAttribute("href", "/shop-pulse");
   await expect(page.getByRole("link", { name: "raevori.com →" })).toHaveAttribute("href", "https://raevori.com");
   await expect(page.getByRole("link", { name: "Talk to us →" })).toHaveAttribute("href", "https://raevori.com/#contact");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://demo.raevori.com");
@@ -26,7 +27,7 @@ test("robots.txt and sitemap.xml", async ({ request }) => {
   const sitemap = await request.get("/sitemap.xml");
   expect(sitemap.status()).toBe(200);
   const s = await sitemap.text();
-  for (const path of ["/", "/table-order", "/shop-assistant"]) expect(s).toContain(`<loc>https://demo.raevori.com${path}</loc>`);
+  for (const path of ["/", "/table-order", "/shop-assistant", "/shop-pulse"]) expect(s).toContain(`<loc>https://demo.raevori.com${path}</loc>`);
 });
 
 test("og image renders", async ({ request }) => {
@@ -40,6 +41,11 @@ test("a kitchen URL with a room is noindex, the plain one is indexable", async (
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
   const res = await page.request.get("/table-order");
   expect(await res.text()).not.toContain('name="robots"');
+
+  await page.goto("/shop-pulse?room=whatever");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+  const pulse = await page.request.get("/shop-pulse");
+  expect(await pulse.text()).not.toContain('name="robots"');
 });
 
 /** Press Tab until `target` has focus (fails after `max` presses). */

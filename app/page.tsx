@@ -16,10 +16,10 @@ export default function Home() {
           Don&apos;t read about it. Try it on your phone.
         </h1>
         <p className="mt-3 mb-6 text-[14px] text-muted sm:text-[15px]">
-          Two real products built by Raevori Studio in Phnom Penh. Both work in Khmer and English.
+          Three real products built by Raevori Studio in Phnom Penh. All work in Khmer and English.
         </p>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <DemoCard
             href="/table-order"
             title="Table Order"
@@ -31,6 +31,13 @@ export default function Home() {
             title="Shop Assistant"
             line="AI that sells in Khmer and English, from real stock. For Facebook and Telegram shops."
             preview={<ShopAssistantPreview />}
+          />
+          <DemoCard
+            href="/shop-pulse"
+            title="Shop Pulse"
+            line="Live sales, best sellers and a 9 pm Telegram report. For any shop that takes KHQR."
+            preview={<ShopPulsePreview />}
+            className="md:col-span-2 lg:col-span-1"
           />
         </div>
 
@@ -45,13 +52,13 @@ export default function Home() {
   );
 }
 
-function DemoCard({ href, title, line, preview }: { href: string; title: string; line: string; preview: ReactNode }) {
+function DemoCard({ href, title, line, preview, className = "" }: { href: string; title: string; line: string; preview: ReactNode; className?: string }) {
   return (
     <a
       href={href}
       // Inline radius: the global :focus-visible rule would otherwise square the corners to 6px.
       style={{ borderRadius: 22 }}
-      className="group block overflow-hidden border border-line bg-surface transition-[transform,border-color] duration-200 ease-out-expo hover:-translate-y-[3px] hover:border-line-strong motion-reduce:hover:translate-y-0"
+      className={`group block overflow-hidden border border-line bg-surface transition-[transform,border-color] duration-200 ease-out-expo hover:-translate-y-[3px] hover:border-line-strong motion-reduce:hover:translate-y-0 ${className}`}
     >
       <div aria-hidden="true">{preview}</div>
       <div className="px-[18px] py-4">
@@ -102,6 +109,29 @@ function ShopAssistantPreview() {
       </div>
       <div className={`${bubble} self-start rounded-[16px_16px_16px_4px] bg-white`}>
         Total $19.50 · <b className="font-semibold text-khqr">Pay with KHQR</b>
+      </div>
+    </div>
+  );
+}
+
+function ShopPulsePreview() {
+  const bars = [38, 64, 50, 82, 70, 96, 56];
+  return (
+    <div
+      className="flex h-[170px] items-end justify-between gap-5 overflow-hidden p-[22px] md:h-[200px]"
+      style={{ background: "linear-gradient(150deg,#f4f1e8,#e3e8d8)" }}
+    >
+      <div className="w-[150px] shrink-0 self-center rounded-[14px] border border-line bg-surface p-3">
+        <div className="text-[10.5px] text-muted">Sales today</div>
+        <div className="mt-0.5 text-[22px] leading-tight font-semibold tracking-[-0.03em] tabular-nums">$418.25</div>
+        <div className="mt-1 text-[10px] text-muted">
+          <b className="font-semibold text-fg">▲ 6%</b> vs yesterday
+        </div>
+      </div>
+      <div className="flex h-[110px] max-w-[220px] flex-1 items-end gap-[5px] md:h-[130px]">
+        {bars.map((h, i) => (
+          <div key={i} className="flex-1 rounded-t-[3px] bg-accent" style={{ height: `${h}%` }} />
+        ))}
       </div>
     </div>
   );

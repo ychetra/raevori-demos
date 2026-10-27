@@ -79,6 +79,11 @@ export function Kitchen() {
             </li>
           ))}
         </ol>
+        {room && (
+          <a href={`/shop-pulse?room=${room}`} className="text-[13px] text-muted underline-offset-2 hover:text-fg hover:underline">
+            See today&apos;s sales in Shop Pulse →
+          </a>
+        )}
       </section>
 
       <section aria-label="Kitchen board" className="min-h-[460px] rounded-[20px] bg-ink p-[18px] text-ink-fg">

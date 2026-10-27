@@ -3,8 +3,8 @@
 - `app/` — Next.js routes (pages and API)
 - `app/layout.tsx` — root layout, fonts (Geist, Noto Sans Khmer), metadata
 - `app/globals.css` — brand tokens (copied from raevori-web) and global styles
-- `app/page.tsx` — home page: headline + two demo cards (previews drawn in markup), canonical `/`
-- `app/robots.ts`, `app/sitemap.ts` — robots.txt (disallow /api/, /dev/) and sitemap (/, /table-order, /shop-assistant); `app/opengraph-image.tsx` — 1200×630 social image
+- `app/page.tsx` — home page: headline + three demo cards (previews drawn in markup), canonical `/`
+- `app/robots.ts`, `app/sitemap.ts` — robots.txt (disallow /api/, /dev/) and sitemap (/, /table-order, /shop-assistant, /shop-pulse); `app/opengraph-image.tsx` — 1200×630 social image
 - `app/api/health/route.ts` — health check for Coolify/Docker (`ok`)
 - `features/table-order/types.ts` — Order, CartLine, RoomEvent types; `menu.ts` — MENU (14 items) + option groups; `km.ts` — all Table Order strings EN/KM
 - `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders hook (SSE + reconnect + closed)
@@ -21,6 +21,8 @@
 - `features/shop-assistant/api.ts` — client sendChat(); `ui/` — ShopAssistant (page layout + how-it-works), Chat (messages, suggestions, busy card, replay, KHQR sheet), Cards (product/delivery/order), ProductArt (SVG clothes)
 - `app/shop-assistant/page.tsx` — Shop Assistant page
 - `features/shop-pulse/` — Shop Pulse: `types.ts` (Sale, fromOrder), `time.ts` (Phnom Penh day/hour helpers), `history.ts` (28 days of deterministic sales), `metrics.ts` (kpis, byHour, byDay, topItems, paymentSplit, dailyReport), `km.ts` (all Shop Pulse strings EN/KM)
+- `features/shop-pulse/ui/` — ShopPulse (page body: intro, live dashboard, room + clock wiring), ColumnChart (SVG column chart with step line, tooltip, keyboard, sr-only table), format.ts (Phnom Penh time/date labels, % and change labels)
+- `app/shop-pulse/page.tsx` — Shop Pulse page (noindex with `?room=`)
 - `lib/i18n.ts` — Lang/Text types and pick(); `lib/money.ts` — usd(), khr() at 4,100; `lib/client-ip.ts` — clientIp() (cf-connecting-ip, then first X-Forwarded-For hop), used by the chat and rooms APIs
 - `components/shared/` — DemoBar, LangToggle, PhoneFrame, Qr (+ qr-svg helpers), KhqrCard, khqr.ts (demo QR value), km.ts (shared Khmer)
 - `app/dev/ui/` — noindex gallery of shared components for review
