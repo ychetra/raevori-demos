@@ -47,4 +47,15 @@ describe("callNext", () => {
     offline();
     expect(await callNext("q", 1)).toBeNull();
   });
+
+  test("sends auto: true only for the board's auto-call", async () => {
+    const bodies: unknown[] = [];
+    globalThis.fetch = (async (_url: string, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return Response.json({ done: null, called: null });
+    }) as typeof fetch;
+    await callNext("q", 2);
+    await callNext("q", 1, { auto: true });
+    expect(bodies).toEqual([{ counter: 2 }, { counter: 1, auto: true }]);
+  });
 });

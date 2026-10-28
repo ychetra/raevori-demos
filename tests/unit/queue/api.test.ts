@@ -115,6 +115,19 @@ describe("queues API", () => {
     expect(await res.json()).toMatchObject({ done: { number: "R-011", status: "done" }, called: { number: "P-007", status: "called", counter: 2 } });
   });
 
+  test("an auto call tops the line up to 3 waiting; a manual call doesn't", async () => {
+    const waiting = (id: string) => store.get(id)!.tickets.filter((t) => t.status === "waiting").length;
+    const auto = await newQueue();
+    for (let i = 0; i < 5; i++) expect((await call(json({ counter: 1, auto: true }), ctx({ id: auto }))).status).toBe(200);
+    expect(waiting(auto)).toBe(3);
+    const manual = await newQueue();
+    for (let i = 0; i < 5; i++) expect((await call(json({ counter: 1 }), ctx({ id: manual }))).status).toBe(200);
+    expect(waiting(manual)).toBe(0);
+    const notTrue = await newQueue();
+    for (let i = 0; i < 5; i++) await call(json({ counter: 1, auto: "yes" }), ctx({ id: notTrue }));
+    expect(waiting(notTrue)).toBe(0);
+  });
+
   test("recall answers the counter's current ticket, or null when idle", async () => {
     const id = await newQueue();
     const res = await recall(json({ counter: 1 }), ctx({ id }));

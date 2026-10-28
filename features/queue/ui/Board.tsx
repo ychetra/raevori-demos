@@ -84,7 +84,7 @@ export function Board() {
     const id = setInterval(() => {
       const s = autoState.current;
       if (document.visibilityState !== "visible" || s.waiting === 0 || !s.room) return;
-      callNext(s.room, s.next);
+      callNext(s.room, s.next, { auto: true });
     }, AUTO_MS);
     return () => clearInterval(id);
   }, [auto, live]);

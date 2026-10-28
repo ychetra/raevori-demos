@@ -89,6 +89,93 @@ describe("queue store", () => {
     expect(called).toEqual(["P-007", "R-013", "C-004", "R-014", mine.number, later.number]);
   });
 
+  describe("auto-call top-up", () => {
+    const waiting = (store: ReturnType<typeof createMemoryStore>, id: string) => store.get(id)!.tickets.filter((t) => t.status === "waiting");
+
+    test("topUp keeps 3 people waiting with made-up walk-ins, numbered in sequence and announced", () => {
+      const c = clock();
+      const store = createMemoryStore({ now: c.now });
+      const { id } = store.create();
+      const fn = vi.fn();
+      store.subscribe(id, fn);
+      for (let i = 0; i < 10; i++) {
+        c.tick(20_000);
+        store.call(id, ((i % 2) + 1) as 1 | 2, { topUp: true });
+        expect(waiting(store, id)).toHaveLength(3);
+      }
+      const tickets = store.get(id)!.tickets;
+      // 6 seeded + 9 walk-ins (the first call still left 3 waiting).
+      expect(tickets).toHaveLength(15);
+      const walkIns = tickets.slice(6);
+      for (const t of walkIns) {
+        expect(t.room).toBe(id);
+        expect(t.number).toMatch(/^[RPC]-\d{3}$/);
+      }
+      // Every number is unique and each prefix counts up without gaps from the seeded ones.
+      for (const p of ["R", "P", "C"]) {
+        const nums = tickets.filter((t) => t.number.startsWith(`${p}-`)).map((t) => Number(t.number.slice(2)));
+        const first = { R: 11, P: 7, C: 4 }[p]!;
+        expect(nums).toEqual(Array.from({ length: nums.length }, (_, i) => first + i));
+      }
+      // Each walk-in is sent to subscribers like any other new ticket.
+      for (const t of walkIns) expect(fn).toHaveBeenCalledWith({ type: "ticket", ticket: expect.objectContaining({ id: t.id, status: "waiting" }) });
+    });
+
+    test("walk-ins are random services", () => {
+      const store = createMemoryStore();
+      const { id } = store.create();
+      for (let i = 0; i < 60; i++) store.call(id, 1, { topUp: true });
+      const services = new Set(store.get(id)!.tickets.slice(6).map((t) => t.service));
+      expect(services.size).toBeGreaterThan(1);
+    });
+
+    test("walk-ins queue behind a visitor who is already waiting, so the visitor moves forward and is called", () => {
+      const c = clock();
+      const store = createMemoryStore({ now: c.now });
+      const { id } = store.create();
+      c.tick(1000);
+      const mine = store.take(id, "payment");
+      const ahead = () => store.get(id)!.tickets.filter((t) => t.status === "waiting" && t.id !== mine.id && t.at.waiting! <= mine.at.waiting!).length;
+      expect(ahead()).toBe(4);
+      const called: string[] = [];
+      for (let i = 0; i < 5; i++) {
+        c.tick(20_000);
+        called.push(store.call(id, ((i % 2) + 1) as 1 | 2, { topUp: true }).called!.number);
+        expect(ahead()).toBe(Math.max(0, 3 - i));
+      }
+      expect(called).toEqual(["P-007", "R-013", "C-004", "R-014", mine.number]);
+      expect(waiting(store, id)).toHaveLength(3);
+    });
+
+    test("walk-ins don't count against the 60 visitor tickets", () => {
+      const store = createMemoryStore();
+      const { id } = store.create();
+      for (let i = 0; i < 20; i++) store.call(id, 1, { topUp: true });
+      for (let i = 0; i < 60; i++) store.take(id, "repair");
+      expect(() => store.take(id, "repair")).toThrow(new QueueError("full"));
+    });
+
+    test("top-ups stop once the room holds 400 tickets, and the line then empties", () => {
+      const store = createMemoryStore();
+      const { id } = store.create();
+      for (let i = 0; i < 60; i++) store.take(id, "repair");
+      for (let i = 0; i < 600; i++) {
+        store.call(id, ((i % 2) + 1) as 1 | 2, { topUp: true });
+        expect(store.get(id)!.tickets.length).toBeLessThanOrEqual(400);
+      }
+      expect(store.get(id)!.tickets).toHaveLength(400);
+      expect(waiting(store, id)).toHaveLength(0);
+    });
+
+    test("without topUp the line still empties and no walk-ins appear", () => {
+      const store = createMemoryStore();
+      const { id } = store.create();
+      for (let i = 0; i < 6; i++) store.call(id, 1, { topUp: false });
+      expect(waiting(store, id)).toHaveLength(0);
+      expect(store.get(id)!.tickets).toHaveLength(6);
+    });
+  });
+
   test("call with no one waiting finishes the counter's ticket and leaves it idle", () => {
     const store = createMemoryStore();
     const { id } = store.create();

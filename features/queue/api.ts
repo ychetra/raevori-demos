@@ -36,10 +36,13 @@ export async function takeTicket(room: string, service: Service): Promise<TakeRe
   }
 }
 
-/** Calls the next customer to `counter`; null when the request failed (the live stream still has the truth). */
-export async function callNext(room: string, counter: Counter): Promise<CallResult | null> {
+/**
+ * Calls the next customer to `counter`; null when the request failed (the live stream still has the truth).
+ * `auto` marks the board's auto-call, which also keeps a few made-up walk-ins waiting.
+ */
+export async function callNext(room: string, counter: Counter, { auto = false }: { auto?: boolean } = {}): Promise<CallResult | null> {
   try {
-    const res = await postJson(`${base(room)}/call`, { counter });
+    const res = await postJson(`${base(room)}/call`, auto ? { counter, auto: true } : { counter });
     return res.ok ? ((await res.json()) as CallResult) : null;
   } catch {
     return null;

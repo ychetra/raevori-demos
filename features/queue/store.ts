@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { PREFIX, type CallResult, type Counter, type Queue, type QueueEvent, type Service, type Ticket } from "./types";
+import { PREFIX, SERVICES, type CallResult, type Counter, type Queue, type QueueEvent, type Service, type Ticket } from "./types";
 
 export class QueueError extends Error {
   constructor(readonly code: "not_found" | "full") {
@@ -11,8 +11,11 @@ export interface QueueStore {
   create(): Queue;
   get(id: string): Queue | undefined;
   take(id: string, service: Service): Ticket;
-  /** Finishes the counter's current ticket and calls the oldest waiting one, if any. */
-  call(id: string, counter: Counter): CallResult;
+  /**
+   * Finishes the counter's current ticket and calls the oldest waiting one, if any. With `topUp` (the board's
+   * auto-call), made-up walk-ins then join the back of the line until WALK_IN_TARGET are waiting.
+   */
+  call(id: string, counter: Counter, opts?: { topUp?: boolean }): CallResult;
   /** Calls the counter's current ticket again (fresh `at.called`, sent as a ticket event); null when the counter is idle. */
   recall(id: string, counter: Counter): Ticket | null;
   leave(id: string, ticketId: string): Ticket;
@@ -22,6 +25,8 @@ export interface QueueStore {
 
 /** Fixed demo service time per person ahead. */
 export const SERVICE_MINUTES = 3;
+/** An auto-call keeps this many people waiting, so a visitor who scans minutes later still sees a line. */
+export const WALK_IN_TARGET = 3;
 
 /** True when ticket `i` was taken before ticket `j` (take time, then list order for ties). */
 const before = (tickets: Ticket[], i: number, j: number) => {
@@ -44,7 +49,8 @@ type Entry = Queue & { taken: number; next: Record<Service, number>; listeners: 
 
 /** Queues live in memory: one per visitor session, private, dropped after `ttlMs` without activity. */
 // `now` reads Date.now on each call (not a captured reference), so tests with a fake clock can expire the shared store.
-export function createMemoryStore({ maxRooms = 500, maxTickets = 60, ttlMs = 2 * 60 * 60 * 1000, now = () => Date.now() } = {}): QueueStore {
+// `maxTickets` caps visitor tickets; walk-ins don't count, but stop once a room holds `maxTotal` tickets (bounds memory).
+export function createMemoryStore({ maxRooms = 500, maxTickets = 60, maxTotal = 400, ttlMs = 2 * 60 * 60 * 1000, now = () => Date.now(), random = Math.random } = {}): QueueStore {
   const rooms = new Map<string, Entry>();
 
   const touch = (r: Entry) => {
@@ -118,7 +124,7 @@ export function createMemoryStore({ maxRooms = 500, maxTickets = 60, ttlMs = 2 *
       emit(r, { type: "ticket", ticket: t });
       return t;
     },
-    call(id, counter) {
+    call(id, counter, { topUp = false } = {}) {
       const r = must(id);
       touch(r);
       const cur = current(r, counter);
@@ -129,6 +135,16 @@ export function createMemoryStore({ maxRooms = 500, maxTickets = 60, ttlMs = 2 *
       });
       const next = r.tickets[oldest];
       const called = next ? put(r, { ...next, status: "called", counter, at: { ...next.at, called: now() } }) : null;
+      if (topUp) {
+        // Walk-ins are taken now, so they stand behind everyone already waiting (visitors included).
+        let waiting = r.tickets.filter((t) => t.status === "waiting").length;
+        while (waiting < WALK_IN_TARGET && r.tickets.length < maxTotal) {
+          const t = ticket(r, SERVICES[Math.floor(random() * SERVICES.length)], { waiting: now() });
+          r.tickets.push(t);
+          emit(r, { type: "ticket", ticket: t });
+          waiting++;
+        }
+      }
       return { done, called };
     },
     recall(id, counter) {
