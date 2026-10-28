@@ -13,6 +13,7 @@ import { T } from "../km";
 import { balanceDue, DEPOSIT, HOLD_MS, SERVICES, STYLISTS } from "../salon";
 import type { Booking, ServiceId, StylistId } from "../types";
 import { useBooking } from "../useBooking";
+import { firstDayWithTimes } from "./days";
 import { bookingDays, bookingIcs, dayLabel, dayParts, dollars, fill, hhmm, mmss, withDeposit } from "./format";
 
 type Step = "service" | "stylist" | "time" | "details" | "pay" | "done";
@@ -202,6 +203,14 @@ export function BookApp() {
     setError(null);
     setStep(s);
   };
+  /** The day strip opens on the first day with a free time for this service and stylist (in the evening, tomorrow). */
+  const pickStylist = (s: StylistId | "any") => {
+    setStylist(s);
+    setStart(null);
+    if (service && now !== null && live.status === "live") setDayIndex(firstDayWithTimes(visible, service, s, bookingDays(now), now));
+    else setDayIndex(0);
+    go("time");
+  };
   const summary = [service && t(T.services[service]), stylist && (stylist === "any" ? t(T.anyone) : t(T.stylists[stylist])), start !== null && `${dayLabel(start, lang)} · ${hhmm(start)}`];
 
   return (
@@ -228,9 +237,9 @@ export function BookApp() {
             ) : view === "stylist" ? (
               <Shell lang={lang} step={step} title={t(T.book.pickStylist)} onBack={() => go("service")} summary={summary.slice(0, 1)}>
                 <Choices>
-                  <Choice on={stylist === "any"} onClick={() => (setStylist("any"), setStart(null), go("time"))} title={t(T.anyone)} line={t(T.book.anyoneLine)} />
+                  <Choice on={stylist === "any"} onClick={() => pickStylist("any")} title={t(T.anyone)} line={t(T.book.anyoneLine)} />
                   {STYLISTS.map((s) => (
-                    <Choice key={s} on={stylist === s} onClick={() => (setStylist(s), setStart(null), go("time"))} title={t(T.stylists[s])} />
+                    <Choice key={s} on={stylist === s} onClick={() => pickStylist(s)} title={t(T.stylists[s])} />
                   ))}
                 </Choices>
               </Shell>

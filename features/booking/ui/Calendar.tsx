@@ -11,6 +11,7 @@ import { T } from "../km";
 import { CLOSE_HOUR, OPEN_HOUR, SLOT_MS, STYLISTS } from "../salon";
 import type { Booking, VisitStatus } from "../types";
 import { useBooking } from "../useBooking";
+import { dayToFollow } from "./days";
 import { bookingDays, dayLabel, dayParts, firstName, hhmm, shown, withDeposit } from "./format";
 
 /** Height of one half-hour row in px. */
@@ -58,6 +59,20 @@ export function Calendar() {
   const days = now === null ? [] : bookingDays(now);
   const day = days[dayIndex] ?? null;
   const visible = useMemo(() => (now === null || day === null ? [] : shown(bookings).filter((b) => startOfDay(b.start) === day)), [bookings, now, day]);
+
+  // A new hold or payment for a day that isn't shown switches the calendar to that day (most evenings that's tomorrow).
+  // Keyed by room, so a new room's first snapshot ("Start a new demo") never counts as new bookings.
+  const seenForDay = useRef<{ room: string | null; statuses: Map<string, Booking["status"]> } | null>(null);
+  useEffect(() => {
+    if (status !== "live") return;
+    const before = seenForDay.current?.room === room ? seenForDay.current.statuses : null;
+    seenForDay.current = { room, statuses: new Map(bookings.map((b) => [b.id, b.status])) };
+    if (now === null) return;
+    const i = dayToFollow(before, bookings, bookingDays(now), day);
+    if (i !== null) setDayIndex(i);
+    // Only a change in the bookings moves the calendar, not the clock or the staff's own day pick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings, status]);
   const latest = flash.size ? bookings.find((b) => flash.has(b.id)) : undefined;
   const link = "underline underline-offset-2 hover:text-accent";
 

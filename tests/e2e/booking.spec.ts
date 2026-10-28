@@ -63,6 +63,22 @@ test("a phone books and pays, and the block shows on the laptop live", async ({ 
   await expect(phone.locator("[data-deposit-line]")).toContainText("Deposit $3 paid");
 });
 
+test("the laptop calendar follows a booking made for another day", async ({ browser }) => {
+  const { board, bookUrl } = await laptop(browser);
+  const days = board.getByRole("group", { name: "Pick a day" }).getByRole("button");
+  await expect(days.nth(0)).toHaveAttribute("aria-pressed", "true");
+  const phone = await phoneAt(browser, bookUrl);
+  await pickTomorrow(phone);
+  await hold(phone, "Dalin");
+  await expect(days.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(board.locator('[data-stylist="bopha"] [data-status="held"]', { hasText: "Dalin" })).toContainText("Being booked");
+
+  await phone.getByRole("button", { name: "Simulate payment" }).click();
+  const block = board.locator('[data-stylist="bopha"] [data-status="booked"]', { hasText: "Dalin" });
+  await expect(block).toContainText("Deposit paid");
+  await expect(block).toHaveAttribute("data-flash", "");
+});
+
 test("two phones race for one slot: the second is told it's taken, and the held slot shows as being booked", async ({ browser }) => {
   const { board, bookUrl } = await laptop(browser);
   await tomorrowOnBoard(board);
