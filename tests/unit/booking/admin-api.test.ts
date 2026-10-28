@@ -204,6 +204,16 @@ describe("services, stylists and settings", () => {
     expect(await unknown.json()).toEqual({ error: "bad_stylist" });
   });
 
+  test("after the salon widens to 07:00-21:00, a hold at 07:00 is 201 for a stylist on the salon's hours", async () => {
+    const { id, cookie } = await admin();
+    expect((await saveSettings(req("PUT", { ...DEFAULT_SETTINGS, open: "07:00", close: "21:00" }, cookie), ctx({ id }))).status).toBe(200);
+    const early = await hold(req("POST", { service: "haircut", stylist: "bopha", start: pp(7, 0, 2), name: "A" }), ctx({ id }));
+    expect(early.status).toBe(201);
+    expect(await early.json()).toMatchObject({ stylist: "bopha", start: pp(7, 0, 2) });
+    const anyone = await hold(req("POST", { service: "haircut", stylist: "any", start: pp(20, 30, 2), name: "B" }), ctx({ id }));
+    expect(anyone.status).toBe(201);
+  });
+
   test("the 6th stylist is 409 too_many_stylists", async () => {
     const { id, cookie } = await admin();
     const add = () => addStylist(req("POST", { stylist: { name: { en: "Nita", km: "នីតា" } } }, cookie), ctx({ id }));

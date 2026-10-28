@@ -45,7 +45,7 @@ describe("per-room salon config", () => {
     expect(room.services[0]).not.toBe(SERVICES[0]);
     expect(room.stylists).toEqual(DEFAULT_STYLISTS);
     expect(room.stylists.map((s) => s.id)).toEqual(STYLISTS);
-    expect(room.stylists[0]).toEqual({ id: "bopha", name: { en: "Bopha", km: "បុប្ផា" }, daysOff: [], hours: { start: "09:00", end: "19:00" } });
+    expect(room.stylists[0]).toEqual({ id: "bopha", name: { en: "Bopha", km: "បុប្ផា" }, daysOff: [], hours: null });
     expect(room.settings).toEqual({ name: "Bopha Beauty", open: "09:00", close: "19:00", deposit: 3 });
     expect(room.settings).toEqual(DEFAULT_SETTINGS);
     expect(room.pin).toMatch(/^\d{4}$/);
@@ -137,6 +137,48 @@ describe("availability uses the room's config", () => {
   });
 });
 
+describe("stylists follow the salon's hours unless set", () => {
+  const friday = D + 2 * DAY;
+  test("after the salon widens to 07:00-21:00, a following stylist offers 07:00 and a hold at 07:00 succeeds", () => {
+    const { store, id } = open();
+    store.setSettings(id, { ...DEFAULT_SETTINGS, open: "07:00", close: "21:00" });
+    const r = store.get(id)!;
+    const free = availability(r.bookings, "haircut", "bopha", friday, at(14), r).map(hhmm);
+    expect([free[0], free.at(-1)]).toEqual(["07:00", "20:30"]);
+    expect(store.hold(id, haircut(at(7, 0, friday), "bopha")).stylist).toBe("bopha");
+    expect(store.hold(id, haircut(at(20, 30, friday), "dara")).stylist).toBe("dara");
+  });
+
+  test("a stylist with custom 10:00-16:00 keeps them when the salon widens", () => {
+    const { store, id } = open();
+    store.updateStylist(id, { id: "dara", hours: { start: "10:00", end: "16:00" } });
+    store.setSettings(id, { ...DEFAULT_SETTINGS, open: "07:00", close: "21:00" });
+    const r = store.get(id)!;
+    const free = availability(r.bookings, "haircut", "dara", friday, at(14), r).map(hhmm);
+    expect([free[0], free.at(-1)]).toEqual(["10:00", "15:30"]);
+    expect(() => store.hold(id, haircut(at(7, 0, friday), "dara"))).toThrow(new BookingError("taken"));
+  });
+
+  test("narrowing the salon clips a custom stylist", () => {
+    const { store, id } = open();
+    store.updateStylist(id, { id: "dara", hours: { start: "10:00", end: "16:00" } });
+    store.setSettings(id, { ...DEFAULT_SETTINGS, open: "11:00", close: "15:00" });
+    const r = store.get(id)!;
+    const free = availability(r.bookings, "haircut", "dara", friday, at(14), r).map(hhmm);
+    expect([free[0], free.at(-1)]).toEqual(["11:00", "14:30"]);
+  });
+
+  test("hours: null switches a custom stylist back to the salon's hours; new stylists follow the salon", () => {
+    const { store, id } = open();
+    expect(store.updateStylist(id, { id: "dara", hours: { start: "10:00", end: "16:00" } }).hours).toEqual({ start: "10:00", end: "16:00" });
+    expect(store.updateStylist(id, { id: "dara", hours: null }).hours).toBeNull();
+    expect(store.addStylist(id, { name: { en: "Nita", km: "នីតា" } }).hours).toBeNull();
+    store.setSettings(id, { ...DEFAULT_SETTINGS, open: "07:00" });
+    const r = store.get(id)!;
+    expect(availability(r.bookings, "haircut", "dara", friday, at(14), r).map(hhmm)[0]).toBe("07:00");
+  });
+});
+
 describe("prices", () => {
   test("a booking keeps the price and deposit it was held at", () => {
     const { store, id } = open();
@@ -223,7 +265,7 @@ describe("stylists and services", () => {
     const { store, id } = open();
     store.setSettings(id, { ...DEFAULT_SETTINGS, open: "10:00" });
     const a = store.addStylist(id, { name: { en: "Nita", km: "នីតា" } });
-    expect(a).toEqual({ id: expect.any(String), name: { en: "Nita", km: "នីតា" }, daysOff: [], hours: { start: "10:00", end: "19:00" } });
+    expect(a).toEqual({ id: expect.any(String), name: { en: "Nita", km: "នីតា" }, daysOff: [], hours: null });
     const b = store.addStylist(id, { name: { en: "Mony", km: "មុន្នី" }, daysOff: [0, 0, 6], hours: { start: "12:00", end: "18:00" } });
     expect(b.daysOff).toEqual([0, 6]);
     expect(new Set(store.get(id)!.stylists.map((s) => s.id)).size).toBe(MAX_STYLISTS);

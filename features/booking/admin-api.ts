@@ -1,5 +1,5 @@
 import type { Lang, Text } from "@/lib/i18n";
-import type { Booking, SalonConfig, SalonSettings, Service, ServiceId, Stylist, StylistId, Weekday } from "./types";
+import type { Booking, SalonConfig, SalonSettings, Service, ServiceId, Stylist, StylistHours, StylistId, Weekday } from "./types";
 
 /**
  * Client helpers for the salon owner's admin API (`/api/bookings/:id/admin/...`). The admin cookie is HttpOnly and scoped to the
@@ -16,9 +16,9 @@ export type AdminResult<T> = { ok: true; value: T } | AdminFail;
 
 /** A service edit: `id` plus only the fields to change. `minutes` is 30, 60, 90 or 120; `price` $0.50-500 in 50-cent steps. */
 export type ServicePatch = { id: ServiceId; price?: number; minutes?: number; hidden?: boolean };
-/** A stylist edit: `id` plus only the fields to change. Names 1-20 characters; hours "HH:MM" on the hour or half hour. */
-export type StylistPatch = { id: StylistId; name?: Text; daysOff?: Weekday[]; hours?: { start: string; end: string } };
-/** A new stylist; the server picks the id. Without `daysOff` and `hours`: every day, the salon's hours. */
+/** A stylist edit: `id` plus only the fields to change. Names 1-20 characters; hours "HH:MM" on the hour or half hour, or null for the salon's hours. */
+export type StylistPatch = { id: StylistId; name?: Text; daysOff?: Weekday[]; hours?: StylistHours | null };
+/** A new stylist; the server picks the id. Without `daysOff` and `hours`: every day, following the salon's hours. */
 export type NewStylist = Omit<StylistPatch, "id" | "name"> & { name: Text };
 
 export type SalonSnapshot = { bookings: Booking[] } & SalonConfig;

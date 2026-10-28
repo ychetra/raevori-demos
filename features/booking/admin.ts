@@ -64,13 +64,18 @@ function daysOff(x: unknown): Weekday[] {
   if (!Array.isArray(x) || !x.every((d) => Number.isInteger(d) && d >= 0 && d <= 6)) throw new AdminError("daysOff");
   return [...new Set(x as Weekday[])].sort((a, b) => a - b);
 }
+/** Custom hours (start before end), or null to follow the salon's hours. */
 function hours(x: unknown): Stylist["hours"] {
+  if (x === null) return null;
   const h = obj(x, "hours");
   if (!isTime(h.start) || !isTime(h.end) || h.start === "24:00" || toMinutes(h.start) >= toMinutes(h.end)) throw new AdminError("hours");
   return { start: h.start, end: h.end };
 }
 
-/** `stylist` with the fields in `patch` changed: name EN/KM 1-20 characters, days off, hours (start before end, on the hour or half hour). */
+/**
+ * `stylist` with the fields in `patch` changed: name EN/KM 1-20 characters, days off, hours (start before end, on the hour
+ * or half hour; null follows the salon's hours).
+ */
 export function editStylist(stylist: Stylist, patch: unknown): Stylist {
   const p = obj(patch, "stylist");
   const next: Stylist = { ...stylist };
@@ -80,11 +85,11 @@ export function editStylist(stylist: Stylist, patch: unknown): Stylist {
   return next;
 }
 
-/** A new stylist with the server's `id`. The name is required; by default no days off and the salon's hours. */
-export function newStylist(input: unknown, id: string, settings: SalonSettings): Stylist {
+/** A new stylist with the server's `id`. The name is required; by default no days off, following the salon's hours. */
+export function newStylist(input: unknown, id: string): Stylist {
   const p = obj(input, "stylist");
   if (p.name === undefined) throw new AdminError("name");
-  return editStylist({ id, name: { en: "", km: "" }, daysOff: [], hours: { start: settings.open, end: settings.close } }, p);
+  return editStylist({ id, name: { en: "", km: "" }, daysOff: [], hours: null }, p);
 }
 
 /** Validated settings: name 1-40 characters, open before close (both on the hour or half hour), deposit $0-10 in 50-cent steps. Unknown fields are dropped. */

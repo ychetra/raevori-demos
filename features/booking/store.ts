@@ -327,7 +327,7 @@ export function createMemoryStore({ maxRooms = 500, maxBookings = 200, ttlMs = 2
       let stylistId: string;
       do stylistId = `stylist-${++r.stylistSeq}`;
       while (r.stylists.some((s) => s.id === stylistId) || r.bookings.some((b) => b.stylist === stylistId));
-      const stylist = newStylist(input, stylistId, r.settings);
+      const stylist = newStylist(input, stylistId);
       setConfig(r, { stylists: [...r.stylists, stylist] });
       return stylist;
     },

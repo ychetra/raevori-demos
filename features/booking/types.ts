@@ -11,8 +11,13 @@ export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /** A service on the room's menu. `price` in dollars (50-cent steps); `minutes` is 30, 60, 90 or 120. Hidden services can't be booked. */
 export type Service = { id: ServiceId; minutes: number; price: number; hidden?: boolean };
-/** A stylist in roster order. `hours` are "HH:MM" on the hour or half hour; outside the salon's hours they are cut to them. */
-export type Stylist = { id: StylistId; name: Text; daysOff: Weekday[]; hours: { start: string; end: string } };
+/** A stylist's own working hours, "HH:MM" on the hour or half hour. */
+export type StylistHours = { start: string; end: string };
+/**
+ * A stylist in roster order. `hours` null (the default) follows the salon's opening hours, whatever they become;
+ * custom hours stay as set, cut to the salon's.
+ */
+export type Stylist = { id: StylistId; name: Text; daysOff: Weekday[]; hours: StylistHours | null };
 /** `open`/`close` are "HH:MM" on the hour or half hour, Phnom Penh; `deposit` is $0-10 in 50-cent steps. */
 export type SalonSettings = { name: string; open: string; close: string; deposit: number };
 /** A room's own salon: what the owner can change in the admin. */

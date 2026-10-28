@@ -15,12 +15,16 @@ export function slotStarts(day: number, settings: SalonSettings = DEFAULT_SETTIN
   return Array.from({ length: Math.max(0, (toMinutes(settings.close) - open) / 30) }, (_, i) => d + (open + i * 30) * MINUTE_MS);
 }
 
-/** When `stylist` works on the day containing `day` (epoch ms): their hours cut to the salon's, or null on a day off. */
+/**
+ * When `stylist` works on the day containing `day` (epoch ms), or null on a day off: the salon's hours when they follow
+ * the salon (`hours` null), otherwise their own hours cut to the salon's.
+ */
 export function workingHours(stylist: Stylist, day: number, settings: SalonSettings): { from: number; to: number } | null {
   if (stylist.daysOff.includes(weekday(day) as Weekday)) return null;
   const d = startOfDay(day);
-  const from = d + Math.max(toMinutes(settings.open), toMinutes(stylist.hours.start)) * MINUTE_MS;
-  const to = d + Math.min(toMinutes(settings.close), toMinutes(stylist.hours.end)) * MINUTE_MS;
+  const own = stylist.hours ?? { start: settings.open, end: settings.close };
+  const from = d + Math.max(toMinutes(settings.open), toMinutes(own.start)) * MINUTE_MS;
+  const to = d + Math.min(toMinutes(settings.close), toMinutes(own.end)) * MINUTE_MS;
   return from < to ? { from, to } : null;
 }
 

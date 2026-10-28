@@ -206,7 +206,7 @@ export function Calendar() {
 /** The calendar's columns for a day: the room's roster, plus any stylist with a booking that day who is no longer on it (after a reset). */
 function columnsFor(config: SalonConfig, bookings: Booking[]): Stylist[] {
   const extra = [...new Set(bookings.map((b) => b.stylist))].filter((id) => !config.stylists.some((s) => s.id === id));
-  return [...config.stylists, ...extra.map((id): Stylist => ({ id, name: { en: id, km: id }, daysOff: [], hours: { start: config.settings.open, end: config.settings.close } }))];
+  return [...config.stylists, ...extra.map((id): Stylist => ({ id, name: { en: id, km: id }, daysOff: [], hours: null }))];
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { btnPrimary, btnSecondary, card, Field, halfHours, input, Sheet, TimeSelect } from "@/components/admin/parts";
+import { btnPrimary, btnSecondary, card, Field, halfHours, input, Segments, Sheet, TimeSelect } from "@/components/admin/parts";
 import { pick, type Lang, type Text } from "@/lib/i18n";
 import { MAX_STYLIST_NAME, MAX_STYLISTS } from "../../admin";
 import { addStylist, updateStylist, type AdminFail } from "../../admin-api";
@@ -52,7 +52,7 @@ export function StaffTab({ room, stylists, settings, lang, onFail }: Props) {
               <span className="min-w-0 flex-1">
                 <b className="block truncate text-[14.5px] font-semibold">{pick(s.name, lang)}</b>
                 <span className="block text-[13px] text-muted">
-                  <span className="tabular-nums">{s.hours.start}–{s.hours.end}</span>
+                  {s.hours ? <span className="tabular-nums">{s.hours.start}–{s.hours.end}</span> : t(T.admin.salonHours)}
                   {" · "}
                   {s.daysOff.length ? `${t(T.admin.off)}: ${offList(s, lang)}` : t(T.admin.everyDay)}
                 </span>
@@ -74,8 +74,10 @@ function StylistSheet({ room, stylist, settings, lang, onFail, onClose }: { room
   const t = (x: Text) => pick(x, lang);
   const [nameEn, setNameEn] = useState(stylist?.name.en ?? "");
   const [nameKm, setNameKm] = useState(stylist && stylist.name.km !== stylist.name.en ? stylist.name.km : "");
-  const [start, setStart] = useState(stylist?.hours.start ?? settings.open);
-  const [end, setEnd] = useState(stylist?.hours.end ?? settings.close);
+  // A stylist follows the salon's hours (hours: null) until the owner sets custom ones.
+  const [custom, setCustom] = useState(!!stylist?.hours);
+  const [start, setStart] = useState(stylist?.hours?.start ?? settings.open);
+  const [end, setEnd] = useState(stylist?.hours?.end ?? settings.close);
   const [off, setOff] = useState<Weekday[]>(stylist?.daysOff ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ field?: string; text: Text } | null>(null);
@@ -85,7 +87,7 @@ function StylistSheet({ room, stylist, settings, lang, onFail, onClose }: { room
   const save = async () => {
     setBusy(true);
     setError(null);
-    const body = { name: { en: nameEn.trim(), km: nameKm.trim() || nameEn.trim() }, hours: { start, end }, daysOff: [...off].sort((a, b) => a - b) };
+    const body = { name: { en: nameEn.trim(), km: nameKm.trim() || nameEn.trim() }, hours: custom ? { start, end } : null, daysOff: [...off].sort((a, b) => a - b) };
     const r = stylist ? await updateStylist(room, { id: stylist.id, ...body }) : await addStylist(room, body);
     setBusy(false);
     if (r.ok) return onClose();
@@ -120,15 +122,32 @@ function StylistSheet({ room, stylist, settings, lang, onFail, onClose }: { room
 
         <fieldset className="flex flex-col gap-2">
           <legend className="text-[12.5px] font-semibold text-muted">{t(T.admin.workHours)}</legend>
-          <div className="mt-1.5 grid grid-cols-2 gap-2.5">
-            <Field label={t(T.admin.starts)} htmlFor="stylist-start">
-              <TimeSelect id="stylist-start" value={start} times={STARTS} onChange={setStart} invalid={!!err("hours")} />
-            </Field>
-            <Field label={t(T.admin.ends)} htmlFor="stylist-end">
-              <TimeSelect id="stylist-end" value={end} times={ENDS} onChange={setEnd} invalid={!!err("hours")} />
-            </Field>
+          <div className="mt-1.5">
+            <Segments
+              value={custom ? "custom" : "salon"}
+              onChange={(v) => setCustom(v === "custom")}
+              label={t(T.admin.workHours)}
+              options={[
+                { value: "salon", label: t(T.admin.salonHours) },
+                { value: "custom", label: t(T.admin.customHours) },
+              ]}
+            />
           </div>
-          {err("hours") ? <p role="alert" className="text-[12.5px] font-medium text-khqr">{err("hours")}</p> : <p className="text-[12px] text-muted">{t(T.admin.workHoursHint)}</p>}
+          {custom ? (
+            <>
+              <div className="grid grid-cols-2 gap-2.5">
+                <Field label={t(T.admin.starts)} htmlFor="stylist-start">
+                  <TimeSelect id="stylist-start" value={start} times={STARTS} onChange={setStart} invalid={!!err("hours")} />
+                </Field>
+                <Field label={t(T.admin.ends)} htmlFor="stylist-end">
+                  <TimeSelect id="stylist-end" value={end} times={ENDS} onChange={setEnd} invalid={!!err("hours")} />
+                </Field>
+              </div>
+              {err("hours") ? <p role="alert" className="text-[12.5px] font-medium text-khqr">{err("hours")}</p> : <p className="text-[12px] text-muted">{t(T.admin.workHoursHint)}</p>}
+            </>
+          ) : (
+            <p className="text-[12px] text-muted">{fill(T.admin.salonHoursHint, lang, { h: `${settings.open}–${settings.close}` })}</p>
+          )}
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">

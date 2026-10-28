@@ -29,12 +29,12 @@ export const SERVICE_BY_ID = Object.fromEntries(SERVICES.map((s) => [s.id, s])) 
 export const STYLISTS: StylistId[] = ["bopha", "dara", "srey-leak"];
 
 export const DEFAULT_SETTINGS: SalonSettings = { name: "Bopha Beauty", open: "09:00", close: "19:00", deposit: DEPOSIT };
-/** The default stylists: every day, the salon's hours. */
+/** The default stylists: every day, following the salon's hours (so widening the salon's hours widens theirs). */
 export const DEFAULT_STYLISTS: Stylist[] = STYLISTS.map((id) => ({
   id,
   name: { ...T.stylists[id] },
   daysOff: [],
-  hours: { start: DEFAULT_SETTINGS.open, end: DEFAULT_SETTINGS.close },
+  hours: null,
 }));
 
 /** A fresh deep copy of the default salon, for a new or reset room: nothing in it is shared with the defaults or another room. */
