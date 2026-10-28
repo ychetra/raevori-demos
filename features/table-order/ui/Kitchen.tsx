@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Qr } from "@/components/shared/Qr";
 import { pick, type Text } from "@/lib/i18n";
 import { usd } from "@/lib/money";
 import { advanceOrder, createRoom, CreateRoomError } from "../api";
 import { ageLabel, optionSummary } from "../format";
 import { T } from "../km";
+import { readPin, savePin } from "../pin";
 import type { Order, OrderStatus } from "../types";
 import { useRoom } from "../useRoom";
 
@@ -25,7 +26,10 @@ export function Kitchen() {
   const router = useRouter();
   const params = useSearchParams();
   const room = params.get("room");
-  const { orders, status } = useRoom(room);
+  const { orders, settings, status } = useRoom(room);
+  const [pin, setPin] = useState<string | null>(null);
+  useEffect(() => setPin(room ? readPin(room) : null), [room]);
+  const cancelNote = useCancelNote(orders, status === "live");
   const [now, setNow] = useState<number | null>(null);
   const [origin, setOrigin] = useState("");
   const [createError, setCreateError] = useState<Text | null>(null);
@@ -40,7 +44,10 @@ export function Kitchen() {
   const start = () => {
     setCreateError(null);
     createRoom()
-      .then(({ id }) => router.replace(`/table-order?room=${id}`))
+      .then(({ id, pin }) => {
+        savePin(id, pin);
+        router.replace(`/table-order?room=${id}`);
+      })
       .catch((e) => setCreateError(e instanceof CreateRoomError && e.status === 429 ? T.ui.tooMany : T.ui.createFailed));
   };
   useEffect(() => {
@@ -80,6 +87,18 @@ export function Kitchen() {
             No phone handy?{" "}
             <a href={menuUrl || undefined} target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-accent">Open the menu here</a>
           </p>
+          {room && (
+            <p data-owner-admin className="mt-2.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line pt-2.5 text-[13px]">
+              <a href={`/table-order/admin?room=${room}`} target="_blank" rel="noopener" className="font-semibold underline underline-offset-2 hover:text-accent">
+                Owner admin →
+              </a>
+              {pin && (
+                <span className="text-muted">
+                  PIN <b data-admin-pin className="font-semibold tracking-[0.12em] text-fg tabular-nums">{pin}</b>
+                </span>
+              )}
+            </p>
+          )}
         </div>
         <ol className="flex flex-col gap-2 text-[13.5px]">
           {["Scan and pick a drink", "Pay with KHQR (demo, no money moves)", "Your ticket appears here instantly"].map((s, i) => (
@@ -99,15 +118,20 @@ export function Kitchen() {
       <section aria-label="Kitchen board" className="min-h-[460px] rounded-[20px] bg-ink p-[18px] text-ink-fg">
         <div className="mb-3.5 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-[16px] font-semibold">Lotus Coffee · Kitchen</h2>
+            <h2 className="text-[16px] font-semibold">{settings.name} · Kitchen</h2>
             <p className="text-[12px] text-ink-muted">{parts ? `${parts.weekday} ${parts.day} ${parts.month} · ${parts.hour}:${parts.minute}` : " "}</p>
           </div>
           <div className="flex gap-[18px] text-[12px] text-ink-muted">
-            <span>Today <b className="text-ink-fg">{12 + orders.length} orders</b></span>
+            <span>Today <b className="text-ink-fg">{12 + orders.filter((o) => o.status !== "cancelled").length} orders</b></span>
             <span>Avg wait <b className="text-ink-fg">4m</b></span>
           </div>
         </div>
 
+        {cancelNote && (
+          <p role="status" data-cancel-note className="mb-3 rounded-[12px] border border-ink-line bg-ink-surface px-3 py-2 text-[13px] animate-[fade-in_.2s_ease-out]">
+            {cancelNote}
+          </p>
+        )}
         {createError ? (
           <div role="alert" className="grid min-h-[340px] place-items-center px-4 text-center">
             <p className="max-w-[36ch] text-[15px]">{pick(createError, "en")}</p>
@@ -138,6 +162,28 @@ export function Kitchen() {
       </section>
     </main>
   );
+}
+
+const NOTE_MS = 6000;
+
+/** "Table 4's order was cancelled", for a few seconds after a board order is cancelled in the admin. Quiet on the first snapshot. */
+function useCancelNote(orders: Order[], live: boolean): string | null {
+  const seen = useRef<Map<string, OrderStatus> | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    if (!live) return;
+    const prev = seen.current;
+    seen.current = new Map(orders.map((o) => [o.id, o.status]));
+    if (!prev) return;
+    const gone = orders.find((o) => o.status === "cancelled" && prev.get(o.id) !== undefined && prev.get(o.id) !== "cancelled");
+    if (!gone) return;
+    setNote(pick(T.ui.cancelledNote, "en").replace("{n}", String(gone.table)));
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setNote(null), NOTE_MS);
+  }, [orders, live]);
+  return note;
 }
 
 function Ticket({ order, now, room }: { order: Order; now: number | null; room: string }) {

@@ -67,6 +67,11 @@ export async function adminSession(room: string): Promise<"in" | "out" | "not_fo
   return res.status === 204 ? "in" : res.status === 404 ? "not_found" : "out";
 }
 
+/** Logs this browser out of the room's admin (expires the cookie). */
+export async function adminLogout(room: string): Promise<void> {
+  await fetch(`${base(room)}/login`, { method: "DELETE" }).catch(() => {});
+}
+
 export const updateItem = (room: string, item: ItemPatch) => call<MenuItem>(`${base(room)}/menu`, "PUT", { item });
 export const addItem = (room: string, item: NewItem) => call<MenuItem>(`${base(room)}/menu`, "POST", { item });
 export const markDone = (room: string, orderId: string) => call<Order>(`${base(room)}/orders/${encodeURIComponent(orderId)}`, "PATCH", { status: "done" });

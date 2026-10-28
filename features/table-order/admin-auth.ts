@@ -11,6 +11,11 @@ export function adminCookie(req: Request, roomId: string, now = Date.now()): str
   return `${ADMIN_COOKIE}=${value}; Path=/api/rooms/${roomId}/admin; Max-Age=${MAX_AGE_S}; HttpOnly; SameSite=Lax${isSecure(req) ? "; Secure" : ""}`;
 }
 
+/** Set-Cookie that removes the room's admin cookie (logout). */
+export function clearAdminCookie(req: Request, roomId: string): string {
+  return `${ADMIN_COOKIE}=; Path=/api/rooms/${roomId}/admin; Max-Age=0; HttpOnly; SameSite=Lax${isSecure(req) ? "; Secure" : ""}`;
+}
+
 /** True when the request carries an unexpired admin cookie signed for this room. */
 export function isAdmin(req: Request, roomId: string, now = Date.now()): boolean {
   const value = verify(readCookie(req, ADMIN_COOKIE), PURPOSE);

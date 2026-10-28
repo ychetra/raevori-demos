@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LangToggle } from "@/components/shared/LangToggle";
 import { Qr } from "@/components/shared/Qr";
 import { createRoom, CreateRoomError } from "@/features/table-order/api";
+import { T as TO } from "@/features/table-order/km";
+import { readPin, savePin } from "@/features/table-order/pin";
 import type { RoomStatus } from "@/features/table-order/useRoom";
 import { useRoom } from "@/features/table-order/useRoom";
 import { pick, type Lang, type Text } from "@/lib/i18n";
@@ -29,7 +31,8 @@ export function ShopPulse() {
   const router = useRouter();
   const params = useSearchParams();
   const room = params.get("room");
-  const { orders, status } = useRoom(room);
+  const { orders, settings, status } = useRoom(room);
+  const cafe = settings.name;
   const [lang, setLang] = useState<Lang>("en");
   const [now, setNow] = useState<number | null>(null);
   const [origin, setOrigin] = useState("");
@@ -39,7 +42,10 @@ export function ShopPulse() {
     if (room) return;
     setCreateError(null);
     createRoom()
-      .then(({ id }) => router.replace(`/shop-pulse?room=${id}`))
+      .then(({ id, pin }) => {
+        savePin(id, pin);
+        router.replace(`/shop-pulse?room=${id}`);
+      })
       .catch((e) => setCreateError(e instanceof CreateRoomError && e.status === 429 ? T.ui.tooMany : T.ui.createFailed));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
@@ -79,7 +85,7 @@ export function ShopPulse() {
       <div lang={lang} className="mt-7">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-[17px] font-bold tracking-[-0.02em]">{pick(T.cafe, lang)}</h2>
+            <h2 className="text-[17px] font-bold tracking-[-0.02em]">{cafe}</h2>
             <p className="text-[12.5px] text-muted tabular-nums">
               {at === null ? (
                 "\u00a0"
@@ -104,7 +110,7 @@ export function ShopPulse() {
         {at === null ? (
           <Skeleton />
         ) : (
-          <Dashboard sales={sales} at={at} lang={lang} room={room} origin={origin} status={status} fresh={fresh} createError={createError} />
+          <Dashboard sales={sales} at={at} lang={lang} room={room} origin={origin} status={status} fresh={fresh} createError={createError} cafe={cafe} />
         )}
       </div>
     </main>
@@ -135,9 +141,9 @@ function useFreshIds(live: Sale[], status: RoomStatus): Set<string> {
   return fresh;
 }
 
-type DashProps = { sales: Sale[]; at: number; lang: Lang; room: string | null; origin: string; status: RoomStatus; fresh: Set<string>; createError: Text | null };
+type DashProps = { sales: Sale[]; at: number; lang: Lang; room: string | null; origin: string; status: RoomStatus; fresh: Set<string>; createError: Text | null; cafe: string };
 
-function Dashboard({ sales, at, lang, room, origin, status, fresh, createError }: DashProps) {
+function Dashboard({ sales, at, lang, room, origin, status, fresh, createError, cafe }: DashProps) {
   const t = (x: Text) => pick(x, lang);
   // "Today" is the trading day, 07:00 to 07:00: overnight sales count with the evening before.
   const today = tradingDayStart(at);
@@ -276,7 +282,7 @@ function Dashboard({ sales, at, lang, room, origin, status, fresh, createError }
           <div className="mb-1.5 text-[11.5px] text-ink-muted">{t(T.ui.telegramLabel)}</div>
           <div data-report className="rounded-[4px_14px_14px_14px] bg-[#1d241e] px-3 py-2.5 leading-[1.55] tabular-nums">
             <b>
-              {t(T.cafe)} · {dayLabel(reportDay, lang)}
+              {cafe} · {dayLabel(reportDay, lang)}
             </b>
             <br />
             {t(T.ui.sales)} {usd(report.revenue)}
@@ -388,6 +394,7 @@ function LiveCard({ feed, lang, room, origin, status, fresh, createError }: { fe
                 </a>
               </p>
             )}
+            {room && <OwnerAdmin room={room} lang={lang} />}
           </div>
         </div>
       )}
@@ -439,5 +446,23 @@ function Skeleton() {
       {shell("", <>{block("h-4 w-24")}{block("mt-3 h-[138px]")}</>)}
       <div className="h-[150px] rounded-[18px] bg-ink lg:col-span-3" />
     </div>
+  );
+}
+
+/** "Owner admin → · PIN 4821": the admin for this page's room, with the PIN this page was told when it made the room. */
+function OwnerAdmin({ room, lang }: { room: string; lang: Lang }) {
+  const [pin, setPin] = useState<string | null>(null);
+  useEffect(() => setPin(readPin(room)), [room]);
+  return (
+    <p data-owner-admin className="mt-1 flex flex-wrap items-center gap-x-2">
+      <a href={`/table-order/admin?room=${room}`} target="_blank" rel="noopener" className="font-semibold underline underline-offset-2 hover:text-accent">
+        {pick(TO.ui.ownerAdmin, lang)} →
+      </a>
+      {pin && (
+        <span className="text-muted">
+          {pick(TO.ui.pin, lang)} <b data-admin-pin className="font-semibold tracking-[0.12em] text-fg tabular-nums">{pin}</b>
+        </span>
+      )}
+    </p>
   );
 }

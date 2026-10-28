@@ -7,8 +7,12 @@ import { T } from "../km";
 import type { CartLine, MenuItem } from "../types";
 import { artTile, MenuArt } from "./MenuArt";
 
-/** Bottom sheet for choosing options and quantity before adding an item to the cart. */
-export function ItemSheet({ item, lang, onAdd, onClose }: { item: MenuItem; lang: Lang; onAdd: (line: CartLine) => void; onClose: () => void }) {
+/**
+ * Bottom sheet for choosing options and quantity before adding an item to the cart. `item` is the live menu's copy, so a
+ * price change shows at once, and an item that sells out (or a shop that closes) while the sheet is open can't be added.
+ */
+export function ItemSheet({ item, lang, closed = false, onAdd, onClose }: { item: MenuItem; lang: Lang; closed?: boolean; onAdd: (line: CartLine) => void; onClose: () => void }) {
+  const unavailable = !!item.soldOut || !!item.hidden;
   const [options, setOptions] = useState<Record<string, string>>(() => Object.fromEntries(item.options.map((g) => [g.id, g.default])));
   const [qty, setQty] = useState(1);
   const dialog = useRef<HTMLDivElement>(null);
@@ -88,10 +92,11 @@ export function ItemSheet({ item, lang, onAdd, onClose }: { item: MenuItem; lang
           </div>
           <button
             type="button"
+            disabled={unavailable || closed}
             onClick={() => onAdd({ itemId: item.id, qty, options })}
-            className="min-h-12 flex-1 rounded-[14px] bg-fg px-4 text-[14px] font-semibold text-white hover:opacity-90"
+            className="min-h-12 flex-1 rounded-[14px] bg-fg px-4 text-[14px] font-semibold text-white enabled:hover:opacity-90 disabled:opacity-40"
           >
-            {pick(T.ui.add, lang)} · {usd(unit * qty)}
+            {unavailable ? pick(T.ui.soldOut, lang) : closed ? pick(T.ui.closedNow, lang) : `${pick(T.ui.add, lang)} · ${usd(unit * qty)}`}
           </button>
         </div>
       </div>
