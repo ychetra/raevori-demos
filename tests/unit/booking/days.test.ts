@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { durationMs } from "@/features/booking/salon";
+import { DEFAULT_SETTINGS, durationMs } from "@/features/booking/salon";
 import type { Booking, BookingStatus, ServiceId, StylistId } from "@/features/booking/types";
-import { dayToFollow, firstDayWithTimes } from "@/features/booking/ui/days";
+import { dayToFollow, firstDayWithTimes, gridRange } from "@/features/booking/ui/days";
 import { bookingDays } from "@/features/booking/ui/format";
 
 const H = 60 * 60 * 1000;
@@ -96,5 +96,27 @@ describe("dayToFollow", () => {
     const one = b("bopha", at(10, 0, D + DAY), "haircut", "held");
     const two = b("dara", at(10, 0, D + 4 * DAY), "haircut", "held");
     expect(dayToFollow(seen(base), [...base, one, two], days, days[0])).toBe(4);
+  });
+});
+
+describe("gridRange", () => {
+  const settings = { ...DEFAULT_SETTINGS, close: "17:00" };
+
+  it("is the opening hours when every booking is inside them, or there are none", () => {
+    expect(gridRange(D, settings, [])).toEqual({ from: at(9), to: at(17) });
+    expect(gridRange(D, settings, [b("bopha", at(9)), b("dara", at(16, 30))])).toEqual({ from: at(9), to: at(17) });
+  });
+
+  it("stretches to paid bookings after closing, so they stay on the calendar", () => {
+    expect(gridRange(D, settings, [b("bopha", at(10)), b("dara", at(17, 30)), b("bopha", at(18), "colour")])).toEqual({ from: at(9), to: at(19, 30) });
+  });
+
+  it("stretches to a booking before opening", () => {
+    expect(gridRange(D, { ...settings, open: "10:00" }, [b("bopha", at(9)), b("dara", at(12))])).toEqual({ from: at(9), to: at(17) });
+  });
+
+  it("works on any day", () => {
+    const day = D + 2 * DAY;
+    expect(gridRange(day, settings, [b("srey-leak", at(7, 30, day))])).toEqual({ from: at(7, 30, day), to: at(17, 0, day) });
   });
 });

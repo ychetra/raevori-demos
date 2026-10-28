@@ -10,10 +10,10 @@ import { createBookingRoom, CreateBookingError, setBookingStatus } from "../api"
 import { workingHours } from "../availability";
 import { T } from "../km";
 import { readPin, savePin } from "../pin";
-import { SLOT_MS, toMinutes } from "../salon";
+import { SLOT_MS } from "../salon";
 import type { Booking, SalonConfig, Stylist, VisitStatus } from "../types";
 import { useBooking } from "../useBooking";
-import { dayToFollow } from "./days";
+import { dayToFollow, gridRange } from "./days";
 import { bookingDays, dayLabel, dayParts, fill, firstName, hhmm, shown, withDeposit } from "./format";
 
 /** Height of one half-hour row in px. */
@@ -210,14 +210,16 @@ function columnsFor(config: SalonConfig, bookings: Booking[]): Stylist[] {
 }
 
 /**
- * One column per stylist (up to 5), half-hour rows over the salon's opening hours. A stylist's day off is a muted column
- * saying "Day off"; hours outside their working hours are muted. Scrolls sideways inside the card when the screen is narrow.
+ * One column per stylist (up to 5), half-hour rows over the salon's opening hours, stretched to cover every booking that
+ * day (one made before the owner narrowed the hours stays, so staff can still mark it). A stylist's day off is a muted
+ * column saying "Day off"; time outside their working hours (and so outside the salon's) is muted. Scrolls sideways
+ * inside the card when the screen is narrow.
  */
 function Grid({ room, day, now, bookings, config, flash, lang }: { room: string; day: number; now: number; bookings: Booking[]; config: SalonConfig; flash: Set<string>; lang: Lang }) {
   const t = (x: Text) => pick(x, lang);
   const { settings } = config;
-  const open = day + toMinutes(settings.open) * MINUTE_MS;
-  const close = day + toMinutes(settings.close) * MINUTE_MS;
+  // The grid's top and bottom: the opening hours, or wider when a booking lies outside them.
+  const { from: open, to: close } = gridRange(day, settings, bookings);
   const rows = Math.max(1, (close - open) / SLOT_MS);
   const height = rows * ROW;
   const y = (ms: number) => ((ms - open) / SLOT_MS) * ROW;
@@ -225,9 +227,9 @@ function Grid({ room, day, now, bookings, config, flash, lang }: { room: string;
   const nowTop = now >= open && now <= close ? y(now) : null;
   const columns = columnsFor(config, bookings);
   const cols = { gridTemplateColumns: `44px repeat(${columns.length}, minmax(0, 1fr))` };
-  // Hour labels on the whole hours inside the opening hours.
-  const firstHour = Math.ceil(toMinutes(settings.open) / 60);
-  const lastHour = Math.floor(toMinutes(settings.close) / 60);
+  // Hour labels on the whole hours inside the grid.
+  const firstHour = Math.ceil((open - day) / (60 * MINUTE_MS));
+  const lastHour = Math.floor((close - day) / (60 * MINUTE_MS));
 
   useEffect(() => setMenu(null), [day]);
 
@@ -252,7 +254,8 @@ function Grid({ room, day, now, bookings, config, flash, lang }: { room: string;
           </div>
           {columns.map((s, ci) => {
             const works = workingHours(s, day, settings);
-            const mine = bookings.filter((b) => b.stylist === s.id && b.end > open && b.start < close);
+            // Never filtered by hours: the grid already covers every booking that day.
+            const mine = bookings.filter((b) => b.stylist === s.id);
             return (
               <div
                 key={s.id}

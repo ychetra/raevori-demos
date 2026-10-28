@@ -1,7 +1,7 @@
 import { startOfDay } from "@/features/shop-pulse/time";
 import { availability } from "../availability";
-import { DEFAULT_SALON } from "../salon";
-import type { Booking, BookingStatus, SalonConfig, ServiceId, StylistId } from "../types";
+import { DEFAULT_SALON, SLOT_MS, toMinutes } from "../salon";
+import type { Booking, BookingStatus, SalonConfig, SalonSettings, ServiceId, StylistId } from "../types";
 
 /**
  * Index into `days` of the first day with any free time for `service` and `stylist`, so the phone's day strip
@@ -29,4 +29,19 @@ export function dayToFollow(seen: ReadonlyMap<string, BookingStatus> | null, boo
   const day = startOfDay(latest.start);
   const i = days.indexOf(day);
   return i < 0 || day === shown ? null : i;
+}
+
+/**
+ * The laptop calendar's visible range (epoch ms) on `day` (its Phnom Penh midnight): the salon's opening hours, stretched
+ * to cover `bookings` (that day's, as shown) from the earliest start to the latest end, on the half-hour grid. Narrowing
+ * the hours never hides a booking made before; the time outside the opening hours is drawn muted.
+ */
+export function gridRange(day: number, settings: SalonSettings, bookings: Booking[]): { from: number; to: number } {
+  let from = day + toMinutes(settings.open) * 60_000;
+  let to = day + toMinutes(settings.close) * 60_000;
+  for (const b of bookings) {
+    from = Math.min(from, b.start);
+    to = Math.max(to, b.end);
+  }
+  return { from: day + Math.floor((from - day) / SLOT_MS) * SLOT_MS, to: day + Math.ceil((to - day) / SLOT_MS) * SLOT_MS };
 }

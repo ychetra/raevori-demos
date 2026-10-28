@@ -135,6 +135,38 @@ test("an added stylist and new prices reach the phone and the calendar", async (
   await expect(phone.getByRole("button", { name: /^Mony/ })).toBeVisible();
 });
 
+test("closing earlier keeps a paid booking after the new closing on the calendar, and staff can mark it No-show", async ({ browser }) => {
+  const { board, bookUrl, room, pin } = await laptop(browser);
+  // Tomorrow, a haircut with Anyone at the first free time from 17:00.
+  const phone = await phoneAt(browser, bookUrl);
+  await phone.getByRole("button", { name: /Haircut/ }).click();
+  await phone.getByRole("button", { name: /^Anyone/ }).click();
+  await phone.getByRole("group", { name: "Date" }).getByRole("button").nth(1).click();
+  await expect(phone.locator("[data-time]").first()).toBeVisible();
+  const times = await phone.locator("[data-time]").evaluateAll((els) => els.map((e) => e.getAttribute("data-time")!));
+  const late = times.find((x) => x >= "17:00")!;
+  expect(late).toBeTruthy();
+  await phone.locator(`[data-time="${late}"]`).click();
+  await phone.locator("#booking-name").fill("Zed Late");
+  await phone.locator('main form button[type="submit"]').click();
+  await phone.getByRole("button", { name: "Simulate payment" }).click();
+  await expect(phone.locator("[data-deposit-line]")).toContainText("Deposit $3 paid");
+
+  const page = await admin(browser, room, pin);
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await page.locator("#closes").selectOption("17:00");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Saved");
+
+  await board.getByRole("group", { name: "Pick a day" }).getByRole("button").nth(1).click();
+  const block = board.locator("[data-booking]", { hasText: "Zed" });
+  await expect(block).toBeVisible();
+  await expect(block).toHaveAttribute("title", new RegExp(`^${late}–`));
+  await block.click();
+  await board.locator('[data-status-menu] [data-mark="noshow"]').click();
+  await expect(block).toHaveAttribute("data-status", "noshow");
+});
+
 test("a wrong PIN is refused and logging out asks for the PIN again", async ({ browser }) => {
   const { room, pin } = await laptop(browser);
   const page = await (await browser.newContext()).newPage();
