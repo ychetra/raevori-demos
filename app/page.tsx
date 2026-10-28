@@ -16,33 +16,44 @@ export default function Home() {
           Don&apos;t read about it. Try it on your phone.
         </h1>
         <p className="mt-3 mb-6 text-[14px] text-muted sm:text-[15px]">
-          Four real products built by Raevori Studio in Phnom Penh. All work in Khmer and English.
+          Five real products built by Raevori Studio in Phnom Penh. All work in Khmer and English.
         </p>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
           <DemoCard
             href="/table-order"
+            className="lg:col-span-3"
             title="Table Order"
             line="QR menu, KHQR checkout and a live kitchen screen. For cafés and restaurants."
             preview={<TableOrderPreview />}
           />
           <DemoCard
             href="/shop-assistant"
+            className="lg:col-span-3"
             title="Shop Assistant"
             line="AI that sells in Khmer and English, from real stock. For Facebook and Telegram shops."
             preview={<ShopAssistantPreview />}
           />
           <DemoCard
             href="/shop-pulse"
+            className="lg:col-span-2"
             title="Shop Pulse"
             line="Live sales, best sellers and a 9 pm Telegram report. For any shop that takes KHQR."
             preview={<ShopPulsePreview />}
           />
           <DemoCard
             href="/queue"
+            className="lg:col-span-2"
             title="Smart Queue"
             line="Take a number by QR and get called on your phone. For clinics, repair shops and banks."
             preview={<SmartQueuePreview />}
+          />
+          <DemoCard
+            href="/booking"
+            className="md:col-span-2 lg:col-span-2"
+            title="Booking"
+            line="Book a time, pay a small KHQR deposit, and the salon sees it live. For salons, spas and clinics."
+            preview={<BookingPreview />}
           />
         </div>
 
@@ -164,6 +175,56 @@ function ShopPulsePreview() {
         {bars.map((h, i) => (
           <div key={i} className="flex-1 rounded-t-[3px] bg-accent" style={{ height: `${h}%` }} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function BookingPreview() {
+  const cols: { name: string; blocks: { top: number; h: number; label?: string; held?: boolean; muted?: boolean }[] }[] = [
+    { name: "Bopha", blocks: [{ top: 0, h: 2, label: "Dany", muted: true }, { top: 3, h: 3, label: "Sreypov" }] },
+    { name: "Dara", blocks: [{ top: 1, h: 1, label: "Vanna" }, { top: 3, h: 1, held: true }, { top: 5, h: 2, label: "Rithy" }] },
+    { name: "Srey Leak", blocks: [{ top: 0, h: 2, label: "Malis" }, { top: 4, h: 2, label: "Kanha" }] },
+  ];
+  const row = 13;
+  return (
+    <div
+      className="flex h-[170px] items-center justify-center gap-4 overflow-hidden p-[22px] md:h-[200px]"
+      style={{ background: "linear-gradient(150deg,#e9e5da,#c9d4b8)" }}
+    >
+      <div className="w-[min(250px,calc(100%-110px))] rounded-[14px] bg-ink p-3 text-ink-fg">
+        <div className="text-[10px] text-ink-muted">Bopha Beauty · Today</div>
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          {cols.map((c) => (
+            <div key={c.name} className="min-w-0">
+              <div className="truncate text-[9.5px] font-semibold">{c.name}</div>
+              <div className="relative mt-1 border-t border-ink-line" style={{ height: row * 7 }}>
+                {c.blocks.map((b) => (
+                  <div
+                    key={b.top}
+                    className={`absolute right-0 left-0 truncate rounded-[4px] px-1 text-[8.5px] leading-[13px] ${
+                      b.held ? "border border-ink-line text-ink-fg" : b.muted ? "bg-ink-surface text-ink-muted" : "bg-ink-accent text-ink"
+                    }`}
+                    style={{
+                      top: b.top * row + 1,
+                      height: b.h * row - 2,
+                      ...(b.held && { backgroundImage: "repeating-linear-gradient(135deg, rgba(168,196,143,0.3) 0 4px, transparent 4px 8px)" }),
+                    }}
+                  >
+                    {b.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="w-[88px] shrink-0 rounded-[18px] bg-fg p-[4px]">
+        <div className="flex h-[120px] flex-col items-center justify-center rounded-[14px] bg-surface px-1.5 text-center">
+          <div className="text-[9.5px] leading-tight font-semibold">Pay deposit</div>
+          <div className="mt-1 text-[16px] leading-none font-semibold tabular-nums">$3</div>
+          <div className="mt-2 rounded-[6px] bg-khqr px-2 py-1 text-[9px] font-semibold text-white">KHQR</div>
+        </div>
       </div>
     </div>
   );

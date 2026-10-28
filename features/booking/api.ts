@@ -7,9 +7,16 @@ const base = (room: string) => `/api/bookings/${encodeURIComponent(room)}`;
 const postJson = (url: string, body?: unknown) =>
   fetch(url, { method: "POST", ...(body !== undefined && { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }) });
 
+/** Room creation failed; `status` 429 means this network hit the creation limit. */
+export class CreateBookingError extends Error {
+  constructor(readonly status: number) {
+    super(`create booking room ${status}`);
+  }
+}
+
 export async function createBookingRoom(): Promise<string> {
   const res = await fetch("/api/bookings", { method: "POST" });
-  if (!res.ok) throw new Error(`create booking room ${res.status}`);
+  if (!res.ok) throw new CreateBookingError(res.status);
   return ((await res.json()) as { id: string }).id;
 }
 

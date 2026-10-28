@@ -1,12 +1,14 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-test("home links to all four demos and back to raevori.com", async ({ page }) => {
+test("home links to all five demos and back to raevori.com", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Don't read about it. Try it on your phone.");
   await expect(page.getByRole("link", { name: /Table Order/ })).toHaveAttribute("href", "/table-order");
   await expect(page.getByRole("link", { name: /Shop Assistant/ })).toHaveAttribute("href", "/shop-assistant");
   await expect(page.getByRole("link", { name: /Shop Pulse/ })).toHaveAttribute("href", "/shop-pulse");
   await expect(page.getByRole("link", { name: /Smart Queue/ })).toHaveAttribute("href", "/queue");
+  await expect(page.getByRole("link", { name: /Booking/ })).toHaveAttribute("href", "/booking");
+  await expect(page.getByText("Five real products", { exact: false })).toBeVisible();
   await expect(page.getByRole("link", { name: "raevori.com →" })).toHaveAttribute("href", "https://raevori.com");
   await expect(page.getByRole("link", { name: "Talk to us →" })).toHaveAttribute("href", "https://raevori.com/#contact");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://demo.raevori.com");
@@ -28,7 +30,7 @@ test("robots.txt and sitemap.xml", async ({ request }) => {
   const sitemap = await request.get("/sitemap.xml");
   expect(sitemap.status()).toBe(200);
   const s = await sitemap.text();
-  for (const path of ["/", "/table-order", "/shop-assistant", "/shop-pulse", "/queue"]) expect(s).toContain(`<loc>https://demo.raevori.com${path}</loc>`);
+  for (const path of ["/", "/table-order", "/shop-assistant", "/shop-pulse", "/queue", "/booking"]) expect(s).toContain(`<loc>https://demo.raevori.com${path}</loc>`);
 });
 
 test("og image renders", async ({ request }) => {
@@ -54,6 +56,15 @@ test("a kitchen URL with a room is noindex, the plain one is indexable", async (
   expect(await queue.text()).not.toContain('name="robots"');
   const ticket = await page.request.get("/queue/ticket?room=whatever");
   expect(await ticket.text()).toContain('content="noindex, nofollow"');
+
+  await page.goto("/booking?room=whatever");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+  const booking = await page.request.get("/booking");
+  const bookingHtml = await booking.text();
+  expect(bookingHtml).not.toContain('name="robots"');
+  expect(bookingHtml).toContain('<meta property="og:title" content="Booking: bookings with a deposit, no more no-shows"');
+  const book = await page.request.get("/booking/book?room=whatever");
+  expect(await book.text()).toContain('content="noindex, nofollow"');
 });
 
 /** Press Tab until `target` has focus (fails after `max` presses). */

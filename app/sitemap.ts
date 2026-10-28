@@ -9,5 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/shop-assistant`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/shop-pulse`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/queue`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/booking`, changeFrequency: "monthly", priority: 0.8 },
   ];
 }
