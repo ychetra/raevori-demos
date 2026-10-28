@@ -43,7 +43,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 26: Café admin screens
 - [x] Task 27: Café admin end-to-end check
 - [ ] Task 28: Salon (Booking) admin
-- [ ] Task 29: Queue admin
+- [x] Task 29: Queue admin
 
 Owner hand-off points: after Task 2 (approve designs), after Task 7 and Task 12 (try each demo), Task 10 and 14 (accounts). Before every hand-off the orchestrator runs the full test suite and reviews screenshots at 390px and 1280px itself.
 
