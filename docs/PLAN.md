@@ -39,6 +39,11 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 22: Booking domain and API (spec `docs/SPEC-BOOKING.md`, added 2026-10-28 while the owner was away; owner to review)
 - [x] Task 23: Booking screens
 - [x] Task 24: Booking end-to-end check
+- [ ] Task 25: Café admin domain and API (spec `docs/SPEC-ADMIN.md`, owner asked 2026-10-28 for "like a real system" and chose the owner admin)
+- [ ] Task 26: Café admin screens
+- [ ] Task 27: Café admin end-to-end check
+- [ ] Task 28: Salon (Booking) admin
+- [ ] Task 29: Queue admin
 
 Owner hand-off points: after Task 2 (approve designs), after Task 7 and Task 12 (try each demo), Task 10 and 14 (accounts). Before every hand-off the orchestrator runs the full test suite and reviews screenshots at 390px and 1280px itself.
 
