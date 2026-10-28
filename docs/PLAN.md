@@ -36,7 +36,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 19: Smart Queue domain and API (spec `docs/SPEC-QUEUE.md`, added 2026-10-28 at the owner's request for more demos; owner to review)
 - [x] Task 20: Smart Queue screens
 - [ ] Task 21: Smart Queue end-to-end check
-- [ ] Task 22: Booking domain and API (spec `docs/SPEC-BOOKING.md`, added 2026-10-28 while the owner was away; owner to review)
+- [x] Task 22: Booking domain and API (spec `docs/SPEC-BOOKING.md`, added 2026-10-28 while the owner was away; owner to review)
 - [ ] Task 23: Booking screens
 - [ ] Task 24: Booking end-to-end check
 
