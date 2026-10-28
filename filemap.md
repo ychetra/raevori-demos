@@ -6,13 +6,16 @@
 - `app/page.tsx` — home page: headline + five demo cards (1 column; 2 columns from md with Booking full width; from lg 2 + 3 on a 6-column grid) (previews drawn in markup), canonical `/`
 - `app/robots.ts`, `app/sitemap.ts` — robots.txt (disallow /api/, /dev/) and sitemap (/, /table-order, /shop-assistant, /shop-pulse, /queue, /booking); `app/opengraph-image.tsx` — 1200×630 social image
 - `app/api/health/route.ts` — health check for Coolify/Docker (`ok`)
-- `features/table-order/types.ts` — Order, CartLine, RoomEvent types; `menu.ts` — MENU (14 items) + option groups; `km.ts` — all Table Order strings EN/KM
-- `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders hook (SSE + reconnect + closed)
+- `features/table-order/types.ts` — Order (new/preparing/ready/done/cancelled), MenuItem (soldOut/hidden), ShopSettings, CartLine, RoomEvent types; `menu.ts` — MENU (14 items) + option groups, copyMenu(), optionsFor(), DEFAULT_ART; `km.ts` — all Table Order strings EN/KM
+- `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders, menu and settings hook (SSE + reconnect + closed; default MENU/settings while connecting)
 - `features/table-order/ui/` — Kitchen (laptop board + QR), CustomerApp (phone flow), ItemSheet, MenuArt (SVG illustrations)
 - `app/table-order/page.tsx` — kitchen page; `app/table-order/menu/page.tsx` — phone menu (noindex)
 - `features/table-order/server.ts` — the process-wide store singleton, room-creation limiter (40 per IP per rolling hour, shared by Table Order and Shop Pulse) + error→HTTP mapping
-- `app/api/rooms/**` — room API: create, snapshot, post order, advance order, SSE events
-- `features/table-order/pricing.ts` — priceOrder(): server-side prices from MENU only; `store.ts` — in-memory RoomStore (rooms, orders, live subscribers, expiry)
+- `app/api/rooms/**` — room API: create (returns the admin PIN), snapshot (orders, menu, settings), post order (sold_out/closed/price_changed), advance order, SSE events
+- `app/api/rooms/[id]/admin/**` — café owner admin API (signed room cookie): login (POST PIN, GET session check), menu (PUT edit, POST add), orders/[orderId] (PATCH done/cancelled), settings (PUT), export.csv (GET), reset (POST)
+- `features/table-order/pricing.ts` — priceOrder(lines, menu = MENU): server-side prices from the room's menu; `store.ts` — in-memory RoomStore (rooms with their own menu, settings and PIN; orders, done/cancel, admin edits, PIN tries, live subscribers, expiry)
+- `features/table-order/admin.ts` — admin rules: item/settings/reason validation, DEFAULT_SETTINGS, isOpen() (Phnom Penh hours), ordersCsv(); `admin-auth.ts` — the signed `ra_admin` cookie (per room, 2 h); `admin-api.ts` — client fetch helpers for the admin API
+- `lib/signed-cookie.ts` — HMAC sign/verify (with a purpose), readCookie(), isSecure(); used by the chat session and the café admin
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)
 - `features/shop-assistant/km.ts` — all Shop Assistant strings EN/KM (products, colours, zones); `catalog.ts` — CATALOG (20 products, stock), COLORS, ZONES
 - `features/shop-assistant/tools.ts` — searchProducts/checkStock/quoteDelivery/createOrder (Khmer-aware matching); `limits.ts` — per-session/IP chat limits, per-IP and global model-call budgets (Phnom Penh days)
@@ -20,7 +23,7 @@
 - `app/api/chat/route.ts` — POST chat turn (limits → runTurn → text + cards)
 - `features/shop-assistant/api.ts` — client sendChat(); `ui/` — ShopAssistant (page layout + how-it-works), Chat (messages, suggestions, busy card, replay, KHQR sheet), Cards (product/delivery/order), ProductArt (SVG clothes)
 - `app/shop-assistant/page.tsx` — Shop Assistant page
-- `features/shop-pulse/` — Shop Pulse: `types.ts` (Sale, fromOrder), `time.ts` (Phnom Penh day/hour helpers), `history.ts` (28 days of deterministic sales), `metrics.ts` (kpis, byHour, byDay, topItems, paymentSplit, dailyReport), `km.ts` (all Shop Pulse strings EN/KM)
+- `features/shop-pulse/` — Shop Pulse: `types.ts` (Sale, fromOrder, liveSales without cancelled orders), `time.ts` (Phnom Penh day/hour helpers), `history.ts` (28 days of deterministic sales), `metrics.ts` (kpis, byHour, byDay, topItems, paymentSplit, dailyReport), `km.ts` (all Shop Pulse strings EN/KM)
 - `features/shop-pulse/ui/` — ShopPulse (page body: intro, live dashboard, room + clock wiring), ColumnChart (SVG column chart with step line, tooltip, keyboard, sr-only table), format.ts (Phnom Penh time/date labels, % and change labels)
 - `app/shop-pulse/page.tsx` — Shop Pulse page (noindex with `?room=`)
 - `features/queue/` — Smart Queue: `types.ts` (Ticket, QueueEvent, PREFIX), `store.ts` (in-memory QueueStore: seeded rooms, take/call/recall/leave, auto-call top-up with made-up walk-ins to keep 3 waiting, position(), waitMinutes()), `server.ts` (store singleton, creation limiter, validation, error→HTTP), `api.ts` (client fetch helpers), `useQueue.ts` (live tickets hook), `km.ts` (all Smart Queue strings EN/KM)

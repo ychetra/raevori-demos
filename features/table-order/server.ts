@@ -1,6 +1,9 @@
 import { UNKNOWN_IP } from "@/lib/client-ip";
+import { AdminError } from "./admin";
+import { isAdmin } from "./admin-auth";
 import { PricingError } from "./pricing";
 import { createMemoryStore, RoomError, type RoomStore } from "./store";
+import type { Room } from "./types";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -46,11 +49,48 @@ g.__roomSweep.unref?.();
 export const ROOMS_PER_HOUR = 40;
 export const roomLimiter: RoomLimiter = (g.__roomLimiter ??= createRoomLimiter({ perHour: ROOMS_PER_HOUR }));
 
-export const err = (status: number, error: string) => Response.json({ error }, { status, headers: { "Cache-Control": "no-store" } });
+export const err = (status: number, error: string, extra: Record<string, unknown> = {}) =>
+  Response.json({ error, ...extra }, { status, headers: { "Cache-Control": "no-store" } });
 
-/** Maps domain errors to HTTP answers; anything else is rethrown. */
+export const ok = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+
+const STATUS: Record<RoomError["code"], number> = {
+  not_found: 404,
+  full: 429,
+  sold_out: 409,
+  closed: 409,
+  bad_table: 400,
+  bad_status: 409,
+  price_changed: 409,
+  too_many_items: 409,
+};
+
+/** Maps domain errors to HTTP answers; anything else is rethrown. sold_out carries `itemId`, price_changed the new `total`. */
 export function toResponse(e: unknown): Response {
-  if (e instanceof RoomError) return e.code === "full" ? err(429, "full") : err(404, "not_found");
+  if (e instanceof RoomError) {
+    const extra = { ...(e.itemId !== undefined && { itemId: e.itemId }), ...(e.total !== undefined && { total: e.total }) };
+    return err(STATUS[e.code], e.code, extra);
+  }
   if (e instanceof PricingError) return err(400, "bad_order");
+  if (e instanceof AdminError) return err(400, "invalid", { field: e.field });
   throw e;
+}
+
+/** The parts of a room anyone with its id may see: never the PIN. */
+export const publicRoom = (r: Room) => ({ orders: r.orders, menu: r.menu, settings: r.settings });
+
+/** The JSON body, or a 400 bad_json answer. */
+export async function readJson(req: Request): Promise<{ body: unknown } | { error: Response }> {
+  try {
+    return { body: await req.json() };
+  } catch {
+    return { error: err(400, "bad_json") };
+  }
+}
+
+/** For every admin route: 404 for an unknown room, 401 without this room's signed admin cookie, else null (go ahead). */
+export function guardAdmin(req: Request, id: string): Response | null {
+  if (!store.get(id)) return err(404, "not_found");
+  if (!isAdmin(req, id)) return err(401, "login");
+  return null;
 }

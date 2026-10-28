@@ -66,6 +66,7 @@ export const T = {
     statusNew: { en: "Paid. The kitchen has it.", km: "បង់ប្រាក់រួច។ ផ្ទះបាយបានទទួលហើយ។" },
     statusPreparing: { en: "Making your order now.", km: "កំពុងធ្វើការកម្មង់របស់អ្នក។" },
     statusReady: { en: "Ready! Pick it up at the counter.", km: "រួចរាល់! សូមមកយកនៅបញ្ជរ។" },
+    statusCancelled: { en: "Order cancelled.", km: "ការកម្មង់ត្រូវបានលុបចោល។" },
     received: { en: "Received", km: "បានទទួល" },
     preparing: { en: "Preparing", km: "កំពុងរៀបចំ" },
     ready: { en: "Ready", km: "រួចរាល់" },

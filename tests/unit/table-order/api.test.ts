@@ -1,9 +1,17 @@
-import { describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { POST as createRoom } from "@/app/api/rooms/route";
 import { GET as getRoom } from "@/app/api/rooms/[id]/route";
 import { POST as postOrder } from "@/app/api/rooms/[id]/orders/route";
 import { PATCH as advance } from "@/app/api/rooms/[id]/orders/[orderId]/route";
 import { GET as events } from "@/app/api/rooms/[id]/events/route";
+
+// Rooms refuse orders outside opening hours (07:00-21:00 Phnom Penh): pin Date to 12:00 Phnom Penh so these run at any hour.
+// Only Date is faked; timers stay real for the event stream.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(Date.UTC(2026, 9, 28, 5));
+});
+afterAll(() => vi.useRealTimers());
 
 const ctx = <T extends object>(p: T) => ({ params: Promise.resolve(p) }) as never;
 const json = (body: unknown) => new Request("http://x/api", { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body) });

@@ -40,7 +40,7 @@ export function Kitchen() {
   const start = () => {
     setCreateError(null);
     createRoom()
-      .then((id) => router.replace(`/table-order?room=${id}`))
+      .then(({ id }) => router.replace(`/table-order?room=${id}`))
       .catch((e) => setCreateError(e instanceof CreateRoomError && e.status === 429 ? T.ui.tooMany : T.ui.createFailed));
   };
   useEffect(() => {

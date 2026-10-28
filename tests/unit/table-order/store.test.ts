@@ -1,5 +1,12 @@
-import { describe, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { createMemoryStore, RoomError } from "@/features/table-order/store";
+
+// Rooms refuse orders outside opening hours (07:00-21:00 Phnom Penh): pin Date to 12:00 Phnom Penh so these run at any hour.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(Date.UTC(2026, 9, 28, 5));
+});
+afterAll(() => vi.useRealTimers());
 
 const latte = [{ itemId: "iced-latte", qty: 1, options: {} }];
 const clock = (start = 1_000_000) => { let t = start; return { now: () => t, tick: (ms: number) => { t += ms; } }; };

@@ -1,0 +1,23 @@
+import { adminCookie } from "@/features/table-order/admin-auth";
+import { err, guardAdmin, readJson, store } from "@/features/table-order/server";
+
+export const dynamic = "force-dynamic";
+
+/** `{ pin }` → 204 with the room's admin cookie; 401 wrong_pin; 429 too_many_tries after 5 wrong PINs in 10 minutes. */
+export async function POST(req: Request, ctx: RouteContext<"/api/rooms/[id]/admin/login">) {
+  const { id } = await ctx.params;
+  if (!store.get(id)) return err(404, "not_found");
+  const json = await readJson(req);
+  if ("error" in json) return json.error;
+  const pin = json.body && typeof json.body === "object" ? (json.body as { pin?: unknown }).pin : undefined;
+  const result = store.login(id, pin);
+  if (result === "locked") return err(429, "too_many_tries");
+  if (result === "wrong") return err(401, "wrong_pin");
+  return new Response(null, { status: 204, headers: { "Set-Cookie": adminCookie(req, id), "Cache-Control": "no-store" } });
+}
+
+/** Whether this browser is logged in to the room's admin: 204 yes, 401 no, 404 unknown room. */
+export async function GET(req: Request, ctx: RouteContext<"/api/rooms/[id]/admin/login">) {
+  const { id } = await ctx.params;
+  return guardAdmin(req, id) ?? new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+}

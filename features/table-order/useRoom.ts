@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DEFAULT_SETTINGS } from "./admin";
 import { roomExists } from "./api";
-import type { Order, RoomEvent } from "./types";
+import { MENU } from "./menu";
+import type { MenuItem, Order, RoomEvent, ShopSettings } from "./types";
 
 export type RoomStatus = "connecting" | "live" | "closed";
 
-/** Live orders for a room. Reconnects after drops (the server resends a full snapshot) and reports "closed" once the room is gone. */
-export function useRoom(roomId: string | null): { orders: Order[]; status: RoomStatus } {
+/**
+ * Live orders, menu and settings for a room. Until the first snapshot the menu and settings are the defaults.
+ * Reconnects after drops (the server resends a full snapshot) and reports "closed" once the room is gone.
+ */
+export function useRoom(roomId: string | null): { orders: Order[]; menu: MenuItem[]; settings: ShopSettings; status: RoomStatus } {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [menu, setMenu] = useState<MenuItem[]>(MENU);
+  const [settings, setSettings] = useState<ShopSettings>(DEFAULT_SETTINGS);
   const [status, setStatus] = useState<RoomStatus>("connecting");
 
   useEffect(() => {
@@ -23,13 +30,19 @@ export function useRoom(roomId: string | null): { orders: Order[]; status: RoomS
         const e = JSON.parse(m.data) as RoomEvent | { type: "closed" };
         if (e.type === "snapshot") {
           setOrders(e.orders);
+          setMenu(e.menu);
+          setSettings(e.settings);
           setStatus("live");
         } else if (e.type === "order") {
           setOrders((prev) => {
             const i = prev.findIndex((o) => o.id === e.order.id);
             return i < 0 ? [...prev, e.order] : prev.map((o) => (o.id === e.order.id ? e.order : o));
           });
-        } else {
+        } else if (e.type === "menu") {
+          setMenu(e.menu);
+        } else if (e.type === "settings") {
+          setSettings(e.settings);
+        } else if (e.type === "closed") {
           setStatus("closed");
           es?.close();
           stopped = true;
@@ -59,5 +72,5 @@ export function useRoom(roomId: string | null): { orders: Order[]; status: RoomS
     };
   }, [roomId]);
 
-  return { orders, status };
+  return { orders, menu, settings, status };
 }

@@ -13,7 +13,7 @@ import { history } from "../history";
 import { T } from "../km";
 import { byDay, byHour, dailyReport, kpis, reportDayStart, topItems } from "../metrics";
 import { hourOf, isClosed, OPEN_HOUR, tradingDayStart } from "../time";
-import { fromOrder, type Sale } from "../types";
+import { liveSales, type Sale } from "../types";
 import { ColumnChart, type Column } from "./ColumnChart";
 import { changeLabel, dayLabel, dayOfMonth, hhmm, pct } from "./format";
 
@@ -39,7 +39,7 @@ export function ShopPulse() {
     if (room) return;
     setCreateError(null);
     createRoom()
-      .then((id) => router.replace(`/shop-pulse?room=${id}`))
+      .then(({ id }) => router.replace(`/shop-pulse?room=${id}`))
       .catch((e) => setCreateError(e instanceof CreateRoomError && e.status === 429 ? T.ui.tooMany : T.ui.createFailed));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
@@ -52,7 +52,7 @@ export function ShopPulse() {
     return () => clearInterval(t);
   }, []);
 
-  const live = useMemo(() => orders.map(fromOrder), [orders]);
+  const live = useMemo(() => liveSales(orders), [orders]);
   // A live order moves every number at once, without waiting for the next tick (and even if this clock is a little behind the server's).
   const at = useMemo(() => (now === null ? null : Math.max(now, Date.now(), ...live.map((s) => s.at))), [now, live]);
 

@@ -43,3 +43,18 @@ export const MENU: MenuItem[] = [
 ];
 
 export const MENU_BY_ID = new Map(MENU.map((m) => [m.id, m]));
+
+/**
+ * A room's own copy of MENU. Each item is cloned on its own: in MENU several items share one option group
+ * object (e.g. `size`), and a single structuredClone would keep that sharing, so editing one item's deltas would change the others.
+ */
+export const copyMenu = (): MenuItem[] => MENU.map((m) => structuredClone(m));
+
+/** Option groups for an item added in the admin, from its art: iced cups get ice, mugs and smoothies don't, pastries can be warmed. */
+export function optionsFor(cat: MenuItem["cat"], image: string): OptionGroup[] {
+  const groups = cat === "bakery" ? [warm] : image.startsWith("mug:") || cat === "smoothie" ? hot : iced;
+  return groups.map((g) => structuredClone(g));
+}
+
+/** The art an added item gets when the admin picks none. */
+export const DEFAULT_ART: Record<MenuItem["cat"], string> = { coffee: "cup:#b98557", tea: "cup:#86a35d", smoothie: "cup:#f2b33d", bakery: "croissant" };

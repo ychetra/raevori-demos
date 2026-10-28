@@ -1,19 +1,23 @@
-import { MENU_BY_ID } from "./menu";
-import type { CartLine, OrderLine } from "./types";
+import { MENU, MENU_BY_ID } from "./menu";
+import type { CartLine, MenuItem, OrderLine } from "./types";
 
 export class PricingError extends Error {}
 
 const MAX_QTY = 20;
 const MAX_LINES = 20;
 
-/** Prices an order from the menu alone. Anything the client sends besides itemId/qty/options is ignored. */
-export function priceOrder(lines: CartLine[]): { lines: OrderLine[]; total: number } {
+/**
+ * Prices an order from the menu alone: the room's menu on the server, the default MENU elsewhere.
+ * Anything the client sends besides itemId/qty/options is ignored. Sold-out and hidden items are priced; the store refuses them.
+ */
+export function priceOrder(lines: CartLine[], menu: MenuItem[] = MENU): { lines: OrderLine[]; total: number } {
   if (!Array.isArray(lines) || lines.length === 0) throw new PricingError("empty order");
   if (lines.length > MAX_LINES) throw new PricingError("too many lines");
+  const byId = menu === MENU ? MENU_BY_ID : new Map(menu.map((m) => [m.id, m]));
 
   let totalCents = 0;
   const priced = lines.map((line): OrderLine => {
-    const item = MENU_BY_ID.get(line?.itemId);
+    const item = byId.get(line?.itemId);
     if (!item) throw new PricingError(`unknown item ${line?.itemId}`);
     const qty = line.qty;
     if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) throw new PricingError("bad quantity");

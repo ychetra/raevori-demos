@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { byDay, byHour, dailyReport, kpis, paymentSplit, reportDayStart, topItems } from "@/features/shop-pulse/metrics";
 import { PP_OFFSET_MS } from "@/features/shop-pulse/time";
-import { fromOrder, type Sale } from "@/features/shop-pulse/types";
+import { fromOrder, liveSales, type Sale } from "@/features/shop-pulse/types";
 import { priceOrder } from "@/features/table-order/pricing";
 import type { Order } from "@/features/table-order/types";
 
@@ -273,5 +273,12 @@ describe("fromOrder", () => {
     const k = kpis([...base, s], NOW);
     expect(k.today).toEqual({ revenue: 4.5, orders: 2, avg: 2.25 });
     expect(k.khqrShare).toBeCloseTo(275 / 450, 10);
+  });
+
+  test("liveSales leaves cancelled orders out and keeps done ones", () => {
+    const t = oct(28, 9, 0);
+    const { lines, total } = priceOrder([{ itemId: "americano", qty: 1, options: {} }]);
+    const o = (id: string, status: Order["status"]): Order => ({ id, room: "r", table: 1, lines, total, payment: "khqr", status, at: { new: t } });
+    expect(liveSales([o("A1", "new"), o("A2", "cancelled"), o("A3", "done"), o("A4", "ready")]).map((s) => s.id)).toEqual(["A1", "A3", "A4"]);
   });
 });

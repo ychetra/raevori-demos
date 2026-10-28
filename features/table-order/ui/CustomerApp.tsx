@@ -231,8 +231,9 @@ function TopBar({ lang, onBack, title, right }: { lang: Lang; onBack: () => void
 
 function Status({ order, lang, room, onMore }: { order: Order; lang: Lang; room: string; onMore: () => void }) {
   const t = (x: Text) => pick(x, lang);
-  const step = { new: 1, preparing: 2, ready: 3 }[order.status];
-  const title = { new: T.ui.statusNew, preparing: T.ui.statusPreparing, ready: T.ui.statusReady }[order.status];
+  // Done (collected) stays on the last step; a cancelled order lights no step. Task 26 designs both screens.
+  const step = { new: 1, preparing: 2, ready: 3, done: 3, cancelled: 0 }[order.status];
+  const title = { new: T.ui.statusNew, preparing: T.ui.statusPreparing, ready: T.ui.statusReady, done: T.ui.statusReady, cancelled: T.ui.statusCancelled }[order.status];
   return (
     <div className="flex h-full flex-col overflow-y-auto px-4 pt-6 pb-4" data-status={order.status}>
       <span className="grid size-[52px] place-items-center rounded-[16px] bg-accent">

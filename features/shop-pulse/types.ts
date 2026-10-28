@@ -7,3 +7,6 @@ export type Sale = { id: string; table: number; lines: OrderLine[]; total: numbe
 export function fromOrder(o: Order): Sale {
   return { id: o.id, table: o.table, lines: o.lines, total: o.total, payment: "khqr", at: o.at.new ?? o.at.preparing ?? o.at.ready ?? 0, live: true };
 }
+
+/** A room's orders as sales. Cancelled orders don't count; done (collected) ones do. */
+export const liveSales = (orders: Order[]): Sale[] => orders.filter((o) => o.status !== "cancelled").map(fromOrder);
