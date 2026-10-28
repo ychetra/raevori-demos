@@ -189,8 +189,9 @@ export function Board() {
                 {line.length === 0 ? (
                   <p className="rounded-[14px] border border-ink-line px-3.5 py-3 text-[13px] text-ink-muted">{t(T.board.nobodyWaiting)}</p>
                 ) : (
-                  <ol data-next className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {line.slice(0, 4).map((w) => (
+                  <ol data-next className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {/* Room for 6: the 4 seeded people plus a visitor or two, so a new number shows up straight away. */}
+                    {line.slice(0, 6).map((w) => (
                       <li key={w.id} data-ticket={w.number} className="min-w-0 rounded-[14px] border border-ink-line bg-ink-surface px-3 py-2.5 animate-[ticket-in_.45s_var(--ease-out-expo)]">
                         <b className="block text-[20px] leading-tight font-semibold tracking-[-0.02em] tabular-nums">{w.number}</b>
                         <span className="block truncate text-[12px] text-ink-muted">{t(T.services[w.service])}</span>
@@ -316,7 +317,7 @@ function BoardSkeleton() {
         </div>
       </div>
       {block("mt-4 h-3 w-12")}
-      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {[0, 1, 2, 3].map((i) => (
           <div key={i}>{block("h-[58px]")}</div>
         ))}

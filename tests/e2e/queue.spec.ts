@@ -29,13 +29,10 @@ async function autoCallOff(board: Page) {
   await expect(sw).toHaveAttribute("aria-checked", "false");
 }
 
-/** The board's Next list shows only 4, and 4 seeded people wait: call one first so a new number is 4th and visible. */
+/** 4 seeded people wait; the Next list has room for 6, so a visitor's number shows up straight away. */
 async function makeRoom(board: Page) {
   await autoCallOff(board);
-  const waiting = board.locator("[data-next] [data-ticket]");
-  await expect(waiting).toHaveCount(4);
-  await board.getByRole("button", { name: "Counter 1", exact: true }).click();
-  await expect(waiting).toHaveCount(3);
+  await expect(board.locator("[data-next] [data-ticket]")).toHaveCount(4);
 }
 
 /** Click "Counter 1" until the phone's ticket is called (4 seeded people are ahead). */
