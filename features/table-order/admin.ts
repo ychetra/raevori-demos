@@ -14,7 +14,9 @@ export class AdminError extends Error {
   }
 }
 
-export const DEFAULT_SETTINGS: ShopSettings = { name: "Lotus Coffee", tables: 12, open: "07:00", close: "21:00" };
+// Open all day by default: visitors come from every time zone, and a demo that refuses orders at night looks broken.
+// The owner can set real hours in the admin to see the closed state.
+export const DEFAULT_SETTINGS: ShopSettings = { name: "Lotus Coffee", tables: 12, open: "00:00", close: "24:00" };
 export const MAX_ITEMS = 60;
 export const MAX_TABLES = 50;
 export const CATEGORIES: Category[] = ["coffee", "tea", "smoothie", "bakery"];

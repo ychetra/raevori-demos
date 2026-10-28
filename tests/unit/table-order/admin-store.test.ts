@@ -24,7 +24,7 @@ describe("room menu and settings", () => {
     const room = store.get(id)!;
     expect(room.menu).toEqual(MENU);
     expect(room.menu).not.toBe(MENU);
-    expect(room.settings).toEqual({ name: "Lotus Coffee", tables: 12, open: "07:00", close: "21:00" });
+    expect(room.settings).toEqual({ name: "Lotus Coffee", tables: 12, open: "00:00", close: "24:00" });
     expect(room.settings).toEqual(DEFAULT_SETTINGS);
     expect(room.pin).toMatch(/^\d{4}$/);
     const pins = new Set(Array.from({ length: 20 }, () => store.get(store.create().id)!.pin));
@@ -54,8 +54,17 @@ describe("room menu and settings", () => {
     expect(store.addOrder(id, 4, latte).status).toBe("new");
   });
 
+  test("a new room takes orders at any hour: demo visitors come from every time zone", () => {
+    const { c, store, id } = open();
+    for (const h of [0, 3, 6, 21, 23]) {
+      c.set(pp(h, 30));
+      expect(store.addOrder(id, 4, latte).status).toBe("new");
+    }
+  });
+
   test("orders are refused outside opening hours, Phnom Penh time", () => {
     const { c, store, id } = open();
+    store.setSettings(id, { name: "Lotus Coffee", tables: 12, open: "07:00", close: "21:00" });
     c.set(pp(6, 59, 59)); // 23:59:59 UTC the day before
     expect(() => store.addOrder(id, 4, latte)).toThrow(new RoomError("closed"));
     c.set(pp(7)); // 00:00 UTC

@@ -45,7 +45,7 @@ Reached from the Kitchen page ("Owner admin →") and from Shop Pulse.
 4. **Shop settings.**
    - Café name, shown on the menu, the kitchen and the KHQR card.
    - Number of tables (1–50).
-   - Opening hours (open/close). Outside the hours the phone menu says "We're closed · opens 7:00" and can't order.
+   - Opening hours (open/close; demo rooms start open all day, 00:00–24:00, because visitors come from every time zone). Outside the hours the phone menu says "We're closed · opens 7:00" and can't order.
    - "Reset demo shop" restores the default menu and settings.
 
 Data and server:
