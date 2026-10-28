@@ -6,10 +6,10 @@ import { LangToggle } from "@/components/shared/LangToggle";
 import { PhoneFrame } from "@/components/shared/PhoneFrame";
 import { pick, type Lang, type Text } from "@/lib/i18n";
 import { leaveQueue, takeTicket } from "../api";
-import { serviceName } from "../admin";
+import { counterName, serviceName } from "../admin";
 import { T } from "../km";
-import { position, waitMinutes } from "../store";
-import { PREFIX, SERVICES, type Service, type Ticket } from "../types";
+import { estimateWait, position } from "../store";
+import { SERVICES, type CounterConfig, type Service, type ServiceConfig, type ServiceId, type Ticket } from "../types";
 import { useQueue } from "../useQueue";
 
 const storageKey = (room: string) => `raevori-queue-ticket:${room}`;
@@ -47,7 +47,7 @@ export function TicketApp() {
   const [lang, setLang] = useState<Lang>("en");
   const [loaded, setLoaded] = useState(false);
   const [mine, setMine] = useState<Ticket | null>(null);
-  const [service, setService] = useState<Service | null>(null);
+  const [chosen, setService] = useState<ServiceId | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Text | null>(null);
   const t = (x: Text) => pick(x, lang);
@@ -71,6 +71,15 @@ export function TicketApp() {
     }
   }, [room, mine, live.status, live.tickets]);
 
+  // The services the owner shows, live: a choice the owner just hid drops out of the selection. They appear with the first
+  // snapshot (not the built-in defaults, which the owner may have changed) and stay through a reconnect.
+  const [configKnown, setConfigKnown] = useState(false);
+  useEffect(() => {
+    if (live.status === "live") setConfigKnown(true);
+  }, [live.status]);
+  const visible = live.config.services.filter((s) => !s.hidden);
+  const service = chosen && visible.some((s) => s.id === chosen) ? chosen : null;
+
   const take = async () => {
     if (!room || !service) return;
     setBusy(true);
@@ -80,6 +89,9 @@ export function TicketApp() {
     if (r.ok) {
       saveTicket(room, r.ticket);
       setMine(r.ticket);
+    } else if (r.error === "hidden") {
+      setService(null);
+      setError(T.ticket.serviceClosed);
     } else if (r.error !== "not_found") setError(r.error === "full" ? T.ticket.full : T.ticket.failed);
   };
   const reset = () => {
@@ -113,7 +125,8 @@ export function TicketApp() {
         <div className="flex h-full flex-col overflow-y-auto">
           <header className="bg-gradient-to-br from-accent to-[#24311d] px-4 pt-4 pb-4 text-[#f4f1e8]">
             <div className="flex items-center justify-between gap-3">
-              <p className="min-w-0 text-[16px] font-semibold tracking-[-0.02em]">{t(T.shop)}</p>
+              {/* Blank until the first snapshot, so a renamed shop doesn't flash the default name. */}
+              <p data-shop-name className="min-w-0 text-[16px] font-semibold tracking-[-0.02em] break-words">{configKnown || closed ? live.config.settings.name : " "}</p>
               <LangToggle lang={lang} onChange={setLang} tone="glass" />
             </div>
           </header>
@@ -121,22 +134,49 @@ export function TicketApp() {
             {view === "closed" ? (
               <Closed lang={lang} />
             ) : view === "loading" ? null : view === "choose" ? (
-              <Choose lang={lang} service={service} onPick={setService} onTake={take} busy={busy} error={error} waiting={live.status === "live" ? waitingCount : null} />
+              <Choose
+                lang={lang}
+                services={configKnown ? visible : null}
+                service={service}
+                onPick={(s) => {
+                  setService(s);
+                  setError(null);
+                }}
+                onTake={take}
+                busy={busy}
+                error={error}
+                waiting={live.status === "live" ? { count: waitingCount, minutes: estimateWait(live.tickets, live.config.services) } : null}
+              />
             ) : view === "finished" ? (
-              <Finished ticket={ticket!} service={serviceName(live.config.services, ticket!.service)} lang={lang} onAgain={reset} />
+              <Finished ticket={ticket!} service={serviceName(live.config.services, ticket!.service)} counters={live.config.counters} lang={lang} onAgain={reset} />
             ) : (
-              <TicketView ticket={ticket!} service={serviceName(live.config.services, ticket!.service)} lang={lang} room={room!} ahead={live.status === "live" ? position(live.tickets, ticket!.id) : null} onLeft={(x) => setMine(x)} />
+              <TicketView
+                ticket={ticket!}
+                service={serviceName(live.config.services, ticket!.service)}
+                counters={live.config.counters}
+                lang={lang}
+                room={room!}
+                ahead={live.status === "live" ? { count: position(live.tickets, ticket!.id), minutes: estimateWait(live.tickets, live.config.services, ticket!.id) } : null}
+                onLeft={(x) => setMine(x)}
+              />
             )}
           </main>
         </div>
-        {view === "ticket" && ticket!.status === "called" && <CalledOverlay ticket={ticket!} lang={lang} />}
+        {view === "ticket" && ticket!.status === "called" && <CalledOverlay ticket={ticket!} counters={live.config.counters} lang={lang} />}
       </PhoneFrame>
     </div>
   );
 }
 
+/** The line under a default service's name; services the owner added have none. */
+const serviceLine = (id: ServiceId): Text | null => ((SERVICES as string[]).includes(id) ? T.serviceLines[id as Service] : null);
+
+/** "Counter 2", or the owner's name for it ("Window B"). */
+const counterLabel = (counters: CounterConfig[], n: number | undefined, lang: Lang) => (n ? pick(counters.find((c) => c.id === n)?.name ?? counterName(n), lang) : "");
+
 function Choose({
   lang,
+  services,
   service,
   onPick,
   onTake,
@@ -145,36 +185,41 @@ function Choose({
   waiting,
 }: {
   lang: Lang;
-  service: Service | null;
-  onPick: (s: Service) => void;
+  /** The visible services; null until the first snapshot. */
+  services: ServiceConfig[] | null;
+  service: ServiceId | null;
+  onPick: (s: ServiceId) => void;
   onTake: () => void;
   busy: boolean;
   error: Text | null;
-  waiting: number | null;
+  waiting: { count: number; minutes: number } | null;
 }) {
   const t = (x: Text) => pick(x, lang);
   return (
     <>
       <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.03em]">{t(T.ticket.pickService)}</h1>
       <p className="mt-1 text-[13px] text-muted tabular-nums">
-        {waiting === null ? " " : `${waiting} ${t(T.ticket.waitingNow)} · ${t(T.ticket.about)} ${waitMinutes(waiting)} ${t(T.board.min)}`}
+        {waiting === null ? " " : `${waiting.count} ${t(T.ticket.waitingNow)} · ${t(T.ticket.about)} ${waiting.minutes} ${t(T.board.min)}`}
       </p>
       <div role="radiogroup" aria-label={t(T.ticket.pickService)} className="mt-4 flex flex-col gap-2.5">
-        {SERVICES.map((s) => {
-          const on = service === s;
+        {services?.length === 0 && <p className="rounded-[16px] border border-line p-4 text-center text-[13.5px] text-muted">{t(T.ticket.noServices)}</p>}
+        {services?.map((s) => {
+          const on = service === s.id;
+          const sub = serviceLine(s.id);
           return (
             <button
-              key={s}
+              key={s.id}
               type="button"
               role="radio"
               aria-checked={on}
-              onClick={() => onPick(s)}
+              data-service={s.id}
+              onClick={() => onPick(s.id)}
               className={`flex items-center gap-3 rounded-[16px] border p-3 text-left transition-colors ${on ? "border-fg bg-surface shadow-[0_0_0_1px_var(--fg)]" : "border-line hover:border-line-strong"}`}
             >
-              <span className={`grid size-11 shrink-0 place-items-center rounded-[12px] text-[17px] font-bold ${on ? "bg-fg text-white" : "bg-paper"}`}>{PREFIX[s]}</span>
+              <span className={`grid size-11 shrink-0 place-items-center rounded-[12px] text-[17px] font-bold ${on ? "bg-fg text-white" : "bg-paper"}`}>{s.prefix}</span>
               <span className="min-w-0">
-                <b className="block text-[15px] font-semibold">{t(T.services[s])}</b>
-                <span className="block text-[13px] text-muted">{t(T.serviceLines[s])}</span>
+                <b className="block text-[15px] font-semibold break-words">{t(s.name)}</b>
+                {sub && <span className="block text-[13px] text-muted">{t(sub)}</span>}
               </span>
             </button>
           );
@@ -200,14 +245,32 @@ function Choose({
   );
 }
 
-function TicketView({ ticket, service, lang, room, ahead, onLeft }: { ticket: Ticket; service: Text; lang: Lang; room: string; ahead: number | null; onLeft: (t: Ticket) => void }) {
+function TicketView({
+  ticket,
+  service,
+  counters,
+  lang,
+  room,
+  ahead: line,
+  onLeft,
+}: {
+  ticket: Ticket;
+  service: Text;
+  counters: CounterConfig[];
+  lang: Lang;
+  room: string;
+  /** People ahead and the minutes they add up to (their services' times); null until the first snapshot. */
+  ahead: { count: number; minutes: number } | null;
+  onLeft: (t: Ticket) => void;
+}) {
   const t = (x: Text) => pick(x, lang);
   const [confirm, setConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [failed, setFailed] = useState(false);
+  const ahead = line?.count ?? null;
   const called = ticket.status === "called";
   const step = ticketStep(ticket, ahead ?? 99);
-  const title = called ? `${t(T.ticket.yourTurn)} · ${t(T.counter)} ${ticket.counter}` : t(step === 2 ? T.ticket.almost : T.ticket.inQueue);
+  const title = called ? `${t(T.ticket.yourTurn)} · ${counterLabel(counters, ticket.counter, lang)}` : t(step === 2 ? T.ticket.almost : T.ticket.inQueue);
 
   const leave = async () => {
     setLeaving(true);
@@ -248,7 +311,7 @@ function TicketView({ ticket, service, lang, room, ahead, onLeft }: { ticket: Ti
             <>
               {ahead} {t(ahead === 1 ? T.ticket.personAhead : T.ticket.peopleAhead)}{" "}
               <span className="font-normal whitespace-nowrap text-muted">
-                · {t(T.ticket.about)} {waitMinutes(ahead)} {t(T.board.min)}
+                · {t(T.ticket.about)} {line!.minutes} {t(T.board.min)}
               </span>
             </>
           )}
@@ -309,7 +372,7 @@ function Progress({ step, lang }: { step: number; lang: Lang }) {
 }
 
 /** Full-screen "It's your turn". Dismissed per call, so a recall shows it again. */
-function CalledOverlay({ ticket, lang }: { ticket: Ticket; lang: Lang }) {
+function CalledOverlay({ ticket, counters, lang }: { ticket: Ticket; counters: CounterConfig[]; lang: Lang }) {
   const t = (x: Text) => pick(x, lang);
   const callKey = ticket.at.called ?? 0;
   const [dismissed, setDismissed] = useState<number | null>(null);
@@ -336,7 +399,7 @@ function CalledOverlay({ ticket, lang }: { ticket: Ticket; lang: Lang }) {
       className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-accent px-6 text-center text-white animate-[fade-in_.25s_ease-out]"
     >
       <h1 id="queue-called-title" className="text-[30px] leading-tight font-semibold tracking-[-0.03em]">
-        {t(T.ticket.itsYourTurn)} · {t(T.counter)} {ticket.counter}
+        {t(T.ticket.itsYourTurn)} · {counterLabel(counters, ticket.counter, lang)}
       </h1>
       <p className="mt-5 rounded-full bg-white/16 px-5 py-2 text-[34px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{ticket.number}</p>
       <p className="mt-4 text-[14px] text-white/85">{t(T.ticket.showNumber)}</p>
@@ -352,7 +415,7 @@ function CalledOverlay({ ticket, lang }: { ticket: Ticket; lang: Lang }) {
   );
 }
 
-function Finished({ ticket, service, lang, onAgain }: { ticket: Ticket; service: Text; lang: Lang; onAgain: () => void }) {
+function Finished({ ticket, service, counters, lang, onAgain }: { ticket: Ticket; service: Text; counters: CounterConfig[]; lang: Lang; onAgain: () => void }) {
   const t = (x: Text) => pick(x, lang);
   const done = ticket.status === "done";
   return (
@@ -368,7 +431,7 @@ function Finished({ ticket, service, lang, onAgain }: { ticket: Ticket; service:
       <p className="mt-1 text-[13.5px] text-muted">{t(done ? T.ticket.doneBody : T.ticket.leftBody)}</p>
       <p className="mt-4 text-[13px] text-muted tabular-nums">
         {ticket.number} · {t(service)}
-        {done && ticket.counter && ` · ${t(T.counter)} ${ticket.counter}`}
+        {done && ticket.counter && ` · ${counterLabel(counters, ticket.counter, lang)}`}
       </p>
       {done && <Progress step={4} lang={lang} />}
       <button type="button" onClick={onAgain} className="mt-6 min-h-11 rounded-[14px] border border-line text-[13.5px] font-semibold hover:border-line-strong">

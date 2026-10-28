@@ -11,6 +11,11 @@ export function adminCookie(req: Request, queueId: string, now = Date.now()): st
   return `${ADMIN_COOKIE}=${value}; Path=/api/queues/${queueId}/admin; Max-Age=${MAX_AGE_S}; HttpOnly; SameSite=Lax${isSecure(req) ? "; Secure" : ""}`;
 }
 
+/** Set-Cookie that removes the queue's admin cookie (logout). */
+export function clearAdminCookie(req: Request, queueId: string): string {
+  return `${ADMIN_COOKIE}=; Path=/api/queues/${queueId}/admin; Max-Age=0; HttpOnly; SameSite=Lax${isSecure(req) ? "; Secure" : ""}`;
+}
+
 /** True when the request carries an unexpired admin cookie signed for this queue. */
 export function isAdmin(req: Request, queueId: string, now = Date.now()): boolean {
   const value = verify(readCookie(req, ADMIN_COOKIE), PURPOSE);

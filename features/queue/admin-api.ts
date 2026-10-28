@@ -58,7 +58,12 @@ export async function adminSession(room: string): Promise<"in" | "out" | "not_fo
   return res.status === 204 ? "in" : res.status === 404 ? "not_found" : "out";
 }
 
-export const updateService = (room: string, service: ServicePatch) => call<ServiceConfig>(`${base(room)}/services`, "PUT", { service });
+/** Logs this browser out of the queue's admin (clears the cookie). */
+export async function adminLogout(room: string): Promise<void> {
+  await fetch(`${base(room)}/login`, { method: "DELETE" }).catch(() => {});
+}
+
+export const updateService =(room: string, service: ServicePatch) => call<ServiceConfig>(`${base(room)}/services`, "PUT", { service });
 export const addService = (room: string, service: NewService) => call<ServiceConfig>(`${base(room)}/services`, "POST", { service });
 /** Sets all counters at once (1-4): the count, names and open/closed. A counter closed or dropped while serving finishes that ticket. */
 export const saveCounters = (room: string, counters: CounterInput[]) => call<CounterConfig[]>(`${base(room)}/counters`, "PUT", { counters });
