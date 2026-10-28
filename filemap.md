@@ -17,8 +17,8 @@
 - `app/api/rooms/[id]/admin/**` — café owner admin API (signed room cookie): login (POST PIN, GET session check, DELETE logout), menu (PUT edit, POST add), orders/[orderId] (PATCH done/cancelled), settings (PUT), export.csv (GET), reset (POST)
 - `features/table-order/pricing.ts` — priceOrder(lines, menu = MENU): server-side prices from the room's menu; `store.ts` — in-memory RoomStore (rooms with their own menu, settings and PIN; orders, done/cancel, admin edits, PIN tries, live subscribers, expiry)
 - `features/table-order/admin.ts` — admin rules: item/settings/reason validation, DEFAULT_SETTINGS, isOpen() (Phnom Penh hours), ordersCsv(); `admin-auth.ts` — the signed `ra_admin` cookie (per room, 2 h); `admin-api.ts` — client fetch helpers for the admin API
-- `lib/signed-cookie.ts` — HMAC sign/verify (with a purpose), readCookie(), isSecure(); used by the chat session, the café admin and the queue admin
-- `lib/signed-cookie.ts` — HMAC sign/verify (with a purpose), readCookie(), isSecure(); used by the chat session, the café admin and the salon admin
+- `lib/signed-cookie.ts` — HMAC sign/verify (with a purpose), readCookie(), isSecure(); used by the chat session and the café, queue and salon admins
+- `lib/live-feed.ts` — openLiveFeed(): a room's Server-Sent Events with reconnects, falling back to polling the JSON snapshot when the stream stays silent (proxies and quick tunnels that buffer it); used by useRoom, useQueue and useBooking
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)
 - `features/shop-assistant/km.ts` — all Shop Assistant strings EN/KM (products, colours, zones); `catalog.ts` — CATALOG (20 products, stock), COLORS, ZONES
 - `features/shop-assistant/tools.ts` — searchProducts/checkStock/quoteDelivery/createOrder (Khmer-aware matching); `limits.ts` — per-session/IP chat limits, per-IP and global model-call budgets (Phnom Penh days)

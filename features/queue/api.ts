@@ -21,11 +21,6 @@ export async function createQueue(): Promise<{ id: string; pin: string }> {
   return (await res.json()) as { id: string; pin: string };
 }
 
-export async function queueExists(id: string): Promise<boolean> {
-  const res = await fetch(base(id), { cache: "no-store" });
-  return res.ok;
-}
-
 export async function takeTicket(room: string, service: ServiceId): Promise<TakeResult> {
   try {
     const res = await postJson(`${base(room)}/tickets`, { service });

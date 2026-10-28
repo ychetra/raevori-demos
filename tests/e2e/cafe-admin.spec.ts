@@ -172,3 +172,18 @@ test("at 360px in Khmer the admin has no horizontal scroll on Menu, Orders and S
     expect(over, `tab ${i}`).toBeLessThanOrEqual(0);
   }
 });
+
+test("when something in between holds the live stream back (a tunnel or proxy), the admin and phone fall back to polling", async ({ browser }) => {
+  const { admin, phone, pin } = await shop(browser, { login: false });
+  // Never answering the events request is what a buffering proxy looks like to the browser: an open, silent stream.
+  for (const page of [admin, phone]) {
+    await page.route("**/events", () => {});
+    await page.reload();
+  }
+  await enterPin(admin, pin);
+  const item = admin.locator('[data-admin-item="iced-latte"]');
+  await expect(item).toBeVisible({ timeout: 8000 });
+
+  await item.getByRole("switch", { name: "Sold out" }).click();
+  await expect(phone.locator('[data-menu-item="iced-latte"]')).toHaveAttribute("data-sold-out", "true", { timeout: 8000 });
+});

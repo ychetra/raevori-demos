@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { openLiveFeed } from "@/lib/live-feed";
 import { defaultConfig } from "./admin";
-import { queueExists } from "./api";
 import type { QueueConfig, QueueEvent, Ticket } from "./types";
 
 export type QueueStatus = "connecting" | "live" | "closed";
@@ -10,7 +10,7 @@ export type QueueStatus = "connecting" | "live" | "closed";
 /**
  * Live tickets for a queue, in take order, and its config (services, counters, settings; the defaults until the first snapshot).
  * Reconnects after drops (the server resends a full snapshot, so a phone that was offline catches up on calls it missed)
- * and reports "closed" once the queue is gone.
+ * and reports "closed" once the queue is gone. Polls the snapshot if the stream is held back (see openLiveFeed).
  */
 export function useQueue(queueId: string | null): { tickets: Ticket[]; config: QueueConfig; status: QueueStatus } {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -19,14 +19,11 @@ export function useQueue(queueId: string | null): { tickets: Ticket[]; config: Q
 
   useEffect(() => {
     if (!queueId) return;
-    let es: EventSource | null = null;
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    let stopped = false;
-
-    const connect = () => {
-      es = new EventSource(`/api/queues/${encodeURIComponent(queueId)}/events`);
-      es.onmessage = (m) => {
-        const e = JSON.parse(m.data) as QueueEvent | { type: "closed" };
+    const url = `/api/queues/${encodeURIComponent(queueId)}`;
+    return openLiveFeed<QueueEvent>(
+      `${url}/events`,
+      url,
+      (e) => {
         if (e.type === "snapshot") {
           setTickets(e.tickets);
           setConfig({ services: e.services, counters: e.counters, settings: e.settings });
@@ -40,32 +37,10 @@ export function useQueue(queueId: string | null): { tickets: Ticket[]; config: Q
           setConfig({ services: e.services, counters: e.counters, settings: e.settings });
         } else if (e.type === "closed") {
           setStatus("closed");
-          es?.close();
-          stopped = true;
         }
-      };
-      es.onerror = () => {
-        es?.close();
-        if (stopped) return;
-        setStatus((s) => (s === "closed" ? s : "connecting"));
-        queueExists(queueId)
-          .then((exists) => {
-            if (stopped) return;
-            if (!exists) return setStatus("closed");
-            retry = setTimeout(connect, 1500);
-          })
-          .catch(() => {
-            if (!stopped) retry = setTimeout(connect, 3000);
-          });
-      };
-    };
-
-    connect();
-    return () => {
-      stopped = true;
-      clearTimeout(retry);
-      es?.close();
-    };
+      },
+      () => setStatus((s) => (s === "closed" ? s : "connecting")),
+    );
   }, [queueId]);
 
   return { tickets, config, status };

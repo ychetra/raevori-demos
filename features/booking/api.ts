@@ -21,11 +21,6 @@ export async function createBookingRoom(): Promise<{ id: string; pin: string }> 
   return (await res.json()) as { id: string; pin: string };
 }
 
-export async function bookingRoomExists(id: string): Promise<boolean> {
-  const res = await fetch(base(id), { cache: "no-store" });
-  return res.ok;
-}
-
 /** Holds a slot for 5 minutes. `invalid` is a 400 (a bad name, phone or start); `taken` means someone else got there first. */
 export async function holdSlot(room: string, input: HoldInput): Promise<HoldResult> {
   try {

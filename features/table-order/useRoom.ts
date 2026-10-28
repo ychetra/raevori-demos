@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { openLiveFeed } from "@/lib/live-feed";
 import { DEFAULT_SETTINGS } from "./admin";
-import { roomExists } from "./api";
 import { MENU } from "./menu";
 import type { MenuItem, Order, RoomEvent, ShopSettings } from "./types";
 
@@ -10,7 +10,7 @@ export type RoomStatus = "connecting" | "live" | "closed";
 
 /**
  * Live orders, menu and settings for a room. Until the first snapshot the menu and settings are the defaults.
- * Reconnects after drops (the server resends a full snapshot) and reports "closed" once the room is gone.
+ * Reconnects after drops (the server resends a full snapshot) and reports "closed" once the room is gone. Polls the snapshot if the stream is held back (see openLiveFeed).
  */
 export function useRoom(roomId: string | null): { orders: Order[]; menu: MenuItem[]; settings: ShopSettings; status: RoomStatus } {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -20,14 +20,11 @@ export function useRoom(roomId: string | null): { orders: Order[]; menu: MenuIte
 
   useEffect(() => {
     if (!roomId) return;
-    let es: EventSource | null = null;
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    let stopped = false;
-
-    const connect = () => {
-      es = new EventSource(`/api/rooms/${encodeURIComponent(roomId)}/events`);
-      es.onmessage = (m) => {
-        const e = JSON.parse(m.data) as RoomEvent | { type: "closed" };
+    const url = `/api/rooms/${encodeURIComponent(roomId)}`;
+    return openLiveFeed<RoomEvent>(
+      `${url}/events`,
+      url,
+      (e) => {
         if (e.type === "snapshot") {
           setOrders(e.orders);
           setMenu(e.menu);
@@ -44,32 +41,10 @@ export function useRoom(roomId: string | null): { orders: Order[]; menu: MenuIte
           setSettings(e.settings);
         } else if (e.type === "closed") {
           setStatus("closed");
-          es?.close();
-          stopped = true;
         }
-      };
-      es.onerror = () => {
-        es?.close();
-        if (stopped) return;
-        setStatus((s) => (s === "closed" ? s : "connecting"));
-        roomExists(roomId)
-          .then((exists) => {
-            if (stopped) return;
-            if (!exists) return setStatus("closed");
-            retry = setTimeout(connect, 1500);
-          })
-          .catch(() => {
-            if (!stopped) retry = setTimeout(connect, 3000);
-          });
-      };
-    };
-
-    connect();
-    return () => {
-      stopped = true;
-      clearTimeout(retry);
-      es?.close();
-    };
+      },
+      () => setStatus((s) => (s === "closed" ? s : "connecting")),
+    );
   }, [roomId]);
 
   return { orders, menu, settings, status };
