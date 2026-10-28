@@ -1,9 +1,13 @@
 import { createRoomLimiter, err, type RoomLimiter } from "@/features/table-order/server";
-import { SERVICE_IDS, STYLISTS } from "./salon";
-import { BookingError, createMemoryStore, type BookingStore } from "./store";
-import type { Booking, BookingEvent, ServiceId, StylistId, VisitStatus } from "./types";
+import { AdminError } from "./admin";
+import { isAdmin } from "./admin-auth";
+import { SERVICE_IDS } from "./salon";
+import { BookingError, createMemoryStore, salonOf, type BookingStore } from "./store";
+import type { Booking, BookingEvent, BookingRoom, ServiceId, StylistId, VisitStatus } from "./types";
 
 export { err };
+
+export const ok = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
 const g = globalThis as typeof globalThis & { __bookingStore?: BookingStore; __bookingSweep?: ReturnType<typeof setInterval>; __bookingLimiter?: RoomLimiter };
 
@@ -24,12 +28,16 @@ export const bookingLimiter: RoomLimiter = (g.__bookingLimiter ??= createRoomLim
  */
 export const publicBooking = ({ phone: _phone, ...b }: Booking): Booking => b;
 
-/** A live event as it leaves the server (see publicBooking). */
+/** The parts of a room anyone with its id may see: the bookings without phones, and the salon config. Never the PIN. */
+export const publicRoom = (r: BookingRoom) => ({ bookings: r.bookings.map(publicBooking), ...salonOf(r) });
+
+/** A live event as it leaves the server (see publicBooking). Config events carry only the config (see salonOf). */
 export const publicEvent = <E extends BookingEvent | { type: "closed" }>(e: E): E =>
   e.type === "snapshot" ? { ...e, bookings: e.bookings.map(publicBooking) } : e.type === "booking" ? { ...e, booking: publicBooking(e.booking) } : e;
 
 export const isService = (v: unknown): v is ServiceId => typeof v === "string" && (SERVICE_IDS as string[]).includes(v);
-export const isStylistChoice = (v: unknown): v is StylistId | "any" => v === "any" || (typeof v === "string" && (STYLISTS as string[]).includes(v));
+/** "any" or a stylist id; whether that stylist is on the room's roster is the store's check (`bad_stylist`). */
+export const isStylistChoice = (v: unknown): v is StylistId | "any" => typeof v === "string" && v.length > 0;
 export const isVisitStatus = (v: unknown): v is VisitStatus => v === "arrived" || v === "noshow";
 
 /** The JSON body, or null when it is not valid JSON. */
@@ -51,10 +59,21 @@ const STATUS: Record<BookingError["code"], number> = {
   bad_name: 400,
   bad_phone: 400,
   bad_start: 400,
+  bad_service: 400,
+  bad_stylist: 400,
+  too_many_stylists: 409,
 };
 
-/** Maps domain errors to HTTP answers; anything else is rethrown. */
+/** Maps domain errors to HTTP answers; anything else is rethrown. An admin input error is 400 `{ error: "invalid", field }`. */
 export function toResponse(e: unknown): Response {
   if (e instanceof BookingError) return err(STATUS[e.code], e.code);
+  if (e instanceof AdminError) return err(400, "invalid", { field: e.field });
   throw e;
+}
+
+/** For every admin route: 404 for an unknown room, 401 without this room's signed admin cookie, else null (go ahead). */
+export function guardAdmin(req: Request, id: string): Response | null {
+  if (!store.get(id)) return err(404, "not_found");
+  if (!isAdmin(req, id)) return err(401, "login");
+  return null;
 }

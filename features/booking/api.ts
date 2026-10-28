@@ -14,10 +14,11 @@ export class CreateBookingError extends Error {
   }
 }
 
-export async function createBookingRoom(): Promise<string> {
+/** A new room; `pin` is its owner-admin PIN, told only to the page that created the room. */
+export async function createBookingRoom(): Promise<{ id: string; pin: string }> {
   const res = await fetch("/api/bookings", { method: "POST" });
   if (!res.ok) throw new CreateBookingError(res.status);
-  return ((await res.json()) as { id: string }).id;
+  return (await res.json()) as { id: string; pin: string };
 }
 
 export async function bookingRoomExists(id: string): Promise<boolean> {

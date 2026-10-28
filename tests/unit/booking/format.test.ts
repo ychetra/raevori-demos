@@ -12,6 +12,8 @@ const booking = (over: Partial<Booking> = {}): Booking => ({
   start: at("2026-10-28T14:30:00"),
   end: at("2026-10-28T15:00:00"),
   name: "Sokha Chan",
+  price: 8,
+  deposit: 3,
   status: "booked",
   at: {},
   ...over,

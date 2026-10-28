@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { bookingRoomExists } from "./api";
-import type { Booking, BookingEvent } from "./types";
+import { DEFAULT_SALON } from "./salon";
+import type { Booking, BookingEvent, SalonConfig } from "./types";
 
 export type LiveStatus = "connecting" | "live" | "closed";
 
 /**
- * Live bookings for a room, in creation order, including expired holds (filter them for display).
+ * Live bookings for a room, in creation order, including expired holds and cancelled bookings (filter them for display),
+ * and the room's salon config (services, stylists, settings), which is the default salon until the first snapshot.
  * Reconnects after drops (the server resends a full snapshot) and reports "closed" once the room is gone.
  */
-export function useBooking(roomId: string | null): { bookings: Booking[]; status: LiveStatus } {
+export function useBooking(roomId: string | null): { bookings: Booking[]; config: SalonConfig; status: LiveStatus } {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [config, setConfig] = useState<SalonConfig>(DEFAULT_SALON);
   const [status, setStatus] = useState<LiveStatus>("connecting");
 
   useEffect(() => {
@@ -26,13 +29,16 @@ export function useBooking(roomId: string | null): { bookings: Booking[]; status
         const e = JSON.parse(m.data) as BookingEvent | { type: "closed" };
         if (e.type === "snapshot") {
           setBookings(e.bookings);
+          setConfig({ services: e.services, stylists: e.stylists, settings: e.settings });
           setStatus("live");
         } else if (e.type === "booking") {
           setBookings((prev) => {
             const i = prev.findIndex((b) => b.id === e.booking.id);
             return i < 0 ? [...prev, e.booking] : prev.map((b) => (b.id === e.booking.id ? e.booking : b));
           });
-        } else {
+        } else if (e.type === "config") {
+          setConfig({ services: e.services, stylists: e.stylists, settings: e.settings });
+        } else if (e.type === "closed") {
           setStatus("closed");
           es?.close();
           stopped = true;
@@ -62,5 +68,5 @@ export function useBooking(roomId: string | null): { bookings: Booking[]; status
     };
   }, [roomId]);
 
-  return { bookings, status };
+  return { bookings, config, status };
 }

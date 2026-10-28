@@ -456,7 +456,7 @@ function Done({ booking: b, lang, now, onAgain }: { booking: Booking; lang: Lang
         ))}
       </dl>
       <p data-deposit-line className="mt-3 text-[14px] font-medium">
-        {fill(T.book.depositLine, lang, { d: dollars(DEPOSIT), x: dollars(balanceDue(b.service)) })}
+        {fill(T.book.depositLine, lang, { d: dollars(b.deposit), x: dollars(balanceDue(b)) })}
       </p>
       <p className="mt-1 text-[13px] text-muted">{t(T.book.reminder)}</p>
       <div className="mt-auto flex flex-col gap-2 pt-6">

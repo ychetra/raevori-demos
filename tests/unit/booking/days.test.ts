@@ -19,6 +19,8 @@ const b = (stylist: StylistId, start: number, service: ServiceId = "haircut", st
   start,
   end: start + durationMs(service),
   name: "Sophea",
+  price: 8,
+  deposit: 3,
   status,
   at: {},
 });

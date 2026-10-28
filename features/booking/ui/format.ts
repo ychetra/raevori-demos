@@ -56,7 +56,7 @@ const icsText = (s: string) => s.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").re
 /** A one-event iCalendar file for a booking, built in the browser. Times are UTC, so every calendar app shows local time. */
 export function bookingIcs(b: Booking, lang: Lang, now: number): string {
   const service = pick(T.services[b.service], lang);
-  const description = `${pick(T.book.stylist, lang)}: ${pick(T.stylists[b.stylist], lang)}. ${fill(T.book.depositLine, lang, { d: dollars(DEPOSIT), x: dollars(balanceDue(b.service)) })}`;
+  const description = `${pick(T.book.stylist, lang)}: ${pick(T.stylists[b.stylist], lang)}. ${fill(T.book.depositLine, lang, { d: dollars(b.deposit), x: dollars(balanceDue(b)) })}`;
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",

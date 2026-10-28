@@ -20,6 +20,8 @@ const b = (stylist: StylistId, start: number, service: ServiceId, status: Bookin
   start,
   end: start + durationMs(service),
   name: "Sophea",
+  price: 8,
+  deposit: 3,
   status,
   ...(holdUntil !== undefined && { holdUntil }),
   at: {},

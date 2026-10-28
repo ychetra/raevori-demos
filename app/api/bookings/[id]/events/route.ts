@@ -1,4 +1,5 @@
 import { err, publicEvent, store } from "@/features/booking/server";
+import { salonOf } from "@/features/booking/store";
 import type { BookingEvent } from "@/features/booking/types";
 
 export const dynamic = "force-dynamic";
@@ -6,7 +7,7 @@ export const dynamic = "force-dynamic";
 /** How often an open stream sweeps its room, so run-out holds clear from calendars within seconds. */
 const HOLD_SWEEP_MS = 5_000;
 
-/** Live booking updates as Server-Sent Events: a snapshot first, then each changed booking. */
+/** Live booking updates as Server-Sent Events: a snapshot (bookings and salon config) first, then each changed booking or config. */
 export async function GET(req: Request, ctx: RouteContext<"/api/bookings/[id]/events">) {
   const { id } = await ctx.params;
   const room = store.get(id);
@@ -18,7 +19,7 @@ export async function GET(req: Request, ctx: RouteContext<"/api/bookings/[id]/ev
     start(controller) {
       // Every event goes through publicEvent, so no visitor's phone reaches the other link holders.
       const send = (e: BookingEvent | { type: "closed" }) => controller.enqueue(enc.encode(`data: ${JSON.stringify(publicEvent(e))}\n\n`));
-      send({ type: "snapshot", bookings: room.bookings });
+      send({ type: "snapshot", bookings: room.bookings, ...salonOf(room) });
       const off = store.subscribe(id, send);
       // Reading the room expires its run-out holds (sent to every subscriber as `booking` events),
       // and notices when the room itself has expired.

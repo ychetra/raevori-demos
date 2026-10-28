@@ -15,7 +15,7 @@ export const T = {
     bopha: { en: "Bopha", km: "បុប្ផា" },
     dara: { en: "Dara", km: "ដារ៉ា" },
     "srey-leak": { en: "Srey Leak", km: "ស្រីលក្ខណ៍" },
-  } satisfies Record<StylistId, Text>,
+  } as Record<StylistId, Text>, // the default roster; a stylist the owner adds has its name in the room's config
   anyone: { en: "Anyone", km: "នរណាក៏បាន" },
   /** Index 0 Sunday ... 6 Saturday. */
   weekdays: [

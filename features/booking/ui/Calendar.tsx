@@ -45,7 +45,7 @@ export function Calendar() {
   const start = () => {
     setCreateError(null);
     createBookingRoom()
-      .then((id) => router.replace(`/booking?room=${id}`))
+      .then(({ id }) => router.replace(`/booking?room=${id}`))
       .catch((e) => setCreateError(e instanceof CreateBookingError && e.status === 429 ? T.board.tooMany : T.board.createFailed));
   };
   useEffect(() => {
