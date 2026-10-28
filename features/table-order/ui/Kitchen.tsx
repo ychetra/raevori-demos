@@ -63,13 +63,15 @@ export function Kitchen() {
           <h1 className="mt-1.5 text-[clamp(26px,3vw,30px)] leading-[1.05] font-semibold tracking-[-0.04em]">Order from your phone. Watch it land in the kitchen.</h1>
         </div>
         <div className="rounded-[20px] border border-line bg-surface p-[18px] text-center">
-          <div className="mx-auto grid aspect-square w-[180px] place-items-center">
+          <div data-qr-slot className="mx-auto grid aspect-square w-[180px] place-items-center">
             {menuUrl ? (
               <a href={menuUrl} target="_blank" rel="noopener" data-menu-url={menuUrl} aria-label="Open the phone menu">
                 <Qr value={menuUrl} label={`QR code to order from table ${TABLE}`} className="w-[180px]" />
               </a>
             ) : (
-              <div className={`size-full rounded-xl bg-paper ${createError ? "" : "animate-pulse"}`} />
+              <div className={`grid size-full place-items-center rounded-xl bg-paper p-4 text-[13px] text-muted ${createError ? "" : "animate-pulse"}`}>
+                {createError && pick(createError, "en")}
+              </div>
             )}
           </div>
           <p className="mt-3 font-semibold">Scan to order from Table {TABLE}</p>

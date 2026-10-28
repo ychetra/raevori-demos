@@ -78,6 +78,8 @@ test("room creation refused (429) shows a message in place of the kitchen board"
   await page.goto("/table-order");
   await expect(page.getByRole("region", { name: "Kitchen board" }).getByRole("alert")).toHaveText("Too many demos from your network right now. Try again in a while.");
   await expect(page.locator("[data-menu-url]")).toHaveCount(0);
+  // The QR slot is the first thing a phone-width visitor sees, so it says it too instead of staying blank.
+  await expect(page.locator("[data-qr-slot]")).toContainText("Too many demos from your network");
 });
 
 test("room creation failing for another reason asks for a reload", async ({ page }) => {
