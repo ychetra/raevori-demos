@@ -1,4 +1,4 @@
-import { err, store } from "@/features/booking/server";
+import { err, publicEvent, store } from "@/features/booking/server";
 import type { BookingEvent } from "@/features/booking/types";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,8 @@ export async function GET(req: Request, ctx: RouteContext<"/api/bookings/[id]/ev
   let cleanup = () => {};
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      const send = (e: BookingEvent | { type: "closed" }) => controller.enqueue(enc.encode(`data: ${JSON.stringify(e)}\n\n`));
+      // Every event goes through publicEvent, so no visitor's phone reaches the other link holders.
+      const send = (e: BookingEvent | { type: "closed" }) => controller.enqueue(enc.encode(`data: ${JSON.stringify(publicEvent(e))}\n\n`));
       send({ type: "snapshot", bookings: room.bookings });
       const off = store.subscribe(id, send);
       // Reading the room expires its run-out holds (sent to every subscriber as `booking` events),

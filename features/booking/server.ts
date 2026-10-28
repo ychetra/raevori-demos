@@ -1,7 +1,7 @@
 import { createRoomLimiter, err, type RoomLimiter } from "@/features/table-order/server";
 import { SERVICE_IDS, STYLISTS } from "./salon";
 import { BookingError, createMemoryStore, type BookingStore } from "./store";
-import type { ServiceId, StylistId, VisitStatus } from "./types";
+import type { Booking, BookingEvent, ServiceId, StylistId, VisitStatus } from "./types";
 
 export { err };
 
@@ -17,6 +17,16 @@ g.__bookingSweep.unref?.();
 
 /** One booking-room creation limiter per server process (20 per IP per rolling hour), separate from the other demos'. */
 export const bookingLimiter: RoomLimiter = (g.__bookingLimiter ??= createRoomLimiter());
+
+/**
+ * A booking as it leaves the server: without the visitor's phone, which stays in the room. Everyone with the room
+ * link gets the snapshot and the live events, so only the hold response (to the phone that typed it) carries it.
+ */
+export const publicBooking = ({ phone: _phone, ...b }: Booking): Booking => b;
+
+/** A live event as it leaves the server (see publicBooking). */
+export const publicEvent = <E extends BookingEvent | { type: "closed" }>(e: E): E =>
+  e.type === "snapshot" ? { ...e, bookings: e.bookings.map(publicBooking) } : e.type === "booking" ? { ...e, booking: publicBooking(e.booking) } : e;
 
 export const isService = (v: unknown): v is ServiceId => typeof v === "string" && (SERVICE_IDS as string[]).includes(v);
 export const isStylistChoice = (v: unknown): v is StylistId | "any" => v === "any" || (typeof v === "string" && (STYLISTS as string[]).includes(v));

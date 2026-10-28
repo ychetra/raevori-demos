@@ -158,6 +158,36 @@ describe("bookings API", () => {
     abort.abort();
   });
 
+  test("a visitor's phone number is kept in the room but never sent out to other link holders", async () => {
+    const id = await newRoom();
+    const res = await hold(json({ ...holdBody(id), phone: "012 345 678" }), ctx({ id }));
+    expect(res.status).toBe(201);
+    const h = (await res.json()) as Booking;
+    expect(h.phone).toBe("012 345 678"); // back to the person who typed it
+    expect(store.get(id)!.bookings.find((b) => b.id === h.id)!.phone).toBe("012 345 678");
+
+    const snap = (await (await getRoom(new Request("http://x"), ctx({ id }))).json()) as { bookings: Booking[] };
+    expect(snap.bookings.find((b) => b.id === h.id)).toBeDefined();
+    expect(snap.bookings.some((b) => "phone" in b)).toBe(false);
+
+    const abort = new AbortController();
+    const reader = (await events(new Request("http://x", { signal: abort.signal }), ctx({ id }))).body!.getReader();
+    const first = await readEvent(reader);
+    expect(first.type).toBe("snapshot");
+    expect((first.bookings as Booking[]).some((b) => "phone" in b)).toBe(false);
+
+    const paid = await pay(post(), ctx({ id, hid: h.id }));
+    expect(await paid.json()).not.toHaveProperty("phone");
+    const event = await readEvent(reader);
+    expect(event).toMatchObject({ type: "booking", booking: { id: h.id, status: "booked" } });
+    expect(event.booking).not.toHaveProperty("phone");
+
+    const marked = await setStatus(json({ status: "arrived" }), ctx({ id, bid: h.id }));
+    expect(await marked.json()).not.toHaveProperty("phone");
+    expect((await readEvent(reader)).booking).not.toHaveProperty("phone");
+    abort.abort();
+  });
+
   describe("with a fake clock", () => {
     afterEach(() => vi.useRealTimers());
 

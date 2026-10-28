@@ -1,4 +1,4 @@
-import { err, isVisitStatus, readJson, store, toResponse } from "@/features/booking/server";
+import { err, isVisitStatus, publicBooking, readJson, store, toResponse } from "@/features/booking/server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/bookings/[id]/[
   if (!body) return err(400, "bad_json");
   if (!isVisitStatus(body.status)) return err(400, "bad_status");
   try {
-    return Response.json(store.setStatus(id, bid, body.status), { headers: { "Cache-Control": "no-store" } });
+    return Response.json(publicBooking(store.setStatus(id, bid, body.status)), { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     return toResponse(e);
   }

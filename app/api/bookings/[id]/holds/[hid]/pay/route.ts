@@ -1,4 +1,4 @@
-import { store, toResponse } from "@/features/booking/server";
+import { publicBooking, store, toResponse } from "@/features/booking/server";
 
 export const dynamic = "force-dynamic";
 
@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function POST(_req: Request, ctx: RouteContext<"/api/bookings/[id]/holds/[hid]/pay">) {
   const { id, hid } = await ctx.params;
   try {
-    return Response.json(store.pay(id, hid), { headers: { "Cache-Control": "no-store" } });
+    return Response.json(publicBooking(store.pay(id, hid)), { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     return toResponse(e);
   }
