@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LangToggle } from "@/components/shared/LangToggle";
 import { Qr } from "@/components/shared/Qr";
-import { createRoom } from "@/features/table-order/api";
+import { createRoom, CreateRoomError } from "@/features/table-order/api";
 import type { RoomStatus } from "@/features/table-order/useRoom";
 import { useRoom } from "@/features/table-order/useRoom";
 import { pick, type Lang, type Text } from "@/lib/i18n";
@@ -33,9 +33,14 @@ export function ShopPulse() {
   const [lang, setLang] = useState<Lang>("en");
   const [now, setNow] = useState<number | null>(null);
   const [origin, setOrigin] = useState("");
+  const [createError, setCreateError] = useState<Text | null>(null);
 
   useEffect(() => {
-    if (!room) createRoom().then((id) => router.replace(`/shop-pulse?room=${id}`));
+    if (room) return;
+    setCreateError(null);
+    createRoom()
+      .then((id) => router.replace(`/shop-pulse?room=${id}`))
+      .catch((e) => setCreateError(e instanceof CreateRoomError && e.status === 429 ? T.ui.tooMany : T.ui.createFailed));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
@@ -99,7 +104,7 @@ export function ShopPulse() {
         {at === null ? (
           <Skeleton />
         ) : (
-          <Dashboard sales={sales} at={at} lang={lang} room={room} origin={origin} status={status} fresh={fresh} />
+          <Dashboard sales={sales} at={at} lang={lang} room={room} origin={origin} status={status} fresh={fresh} createError={createError} />
         )}
       </div>
     </main>
@@ -130,9 +135,9 @@ function useFreshIds(live: Sale[], status: RoomStatus): Set<string> {
   return fresh;
 }
 
-type DashProps = { sales: Sale[]; at: number; lang: Lang; room: string | null; origin: string; status: RoomStatus; fresh: Set<string> };
+type DashProps = { sales: Sale[]; at: number; lang: Lang; room: string | null; origin: string; status: RoomStatus; fresh: Set<string>; createError: Text | null };
 
-function Dashboard({ sales, at, lang, room, origin, status, fresh }: DashProps) {
+function Dashboard({ sales, at, lang, room, origin, status, fresh, createError }: DashProps) {
   const t = (x: Text) => pick(x, lang);
   // "Today" is the trading day, 07:00 to 07:00: overnight sales count with the evening before.
   const today = tradingDayStart(at);
@@ -263,7 +268,7 @@ function Dashboard({ sales, at, lang, room, origin, status, fresh }: DashProps) 
         )}
       </section>
 
-      <LiveCard feed={feed} lang={lang} room={room} origin={origin} status={status} fresh={fresh} />
+      <LiveCard feed={feed} lang={lang} room={room} origin={origin} status={status} fresh={fresh} createError={createError} />
       </div>
 
       <section className="order-5 grid gap-4 rounded-[18px] bg-ink p-4 text-[12.5px] text-ink-fg sm:grid-cols-2 lg:col-span-3">
@@ -338,7 +343,7 @@ function itemsSummary(s: Sale, lang: Lang): string {
   return s.lines.map((l) => `${l.qty > 1 ? `${l.qty}× ` : ""}${pick(l.name, lang)}`).join(", ");
 }
 
-function LiveCard({ feed, lang, room, origin, status, fresh }: { feed: Sale[]; lang: Lang; room: string | null; origin: string; status: RoomStatus; fresh: Set<string> }) {
+function LiveCard({ feed, lang, room, origin, status, fresh, createError }: { feed: Sale[]; lang: Lang; room: string | null; origin: string; status: RoomStatus; fresh: Set<string>; createError: Text | null }) {
   const t = (x: Text) => pick(x, lang);
   const menuUrl = room && origin ? `${origin}/table-order/menu?room=${room}&table=${TABLE}` : "";
   const link = "underline underline-offset-2 hover:text-accent";
@@ -347,7 +352,11 @@ function LiveCard({ feed, lang, room, origin, status, fresh }: { feed: Sale[]; l
     <section data-live-feed className={`${card} order-4`}>
       <h2 className={cardTitle}>{t(T.ui.liveOrders)}</h2>
 
-      {status === "closed" ? (
+      {createError ? (
+        <div role="alert" className="mt-3 rounded-[14px] border border-line bg-paper/50 p-3.5 text-[13px]">
+          <p>{t(createError)}</p>
+        </div>
+      ) : status === "closed" ? (
         <div className="mt-3 rounded-[14px] border border-line bg-paper/50 p-3.5 text-[13px]">
           <p className="font-semibold">{t(T.ui.closedTitle)}</p>
           <a href="/shop-pulse" className={`mt-1 inline-block text-accent ${link}`}>

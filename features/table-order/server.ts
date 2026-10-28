@@ -39,8 +39,12 @@ export const store: RoomStore = (g.__roomStore ??= createMemoryStore());
 g.__roomSweep ??= setInterval(() => store.sweep(), 5 * 60 * 1000);
 g.__roomSweep.unref?.();
 
-/** One room-creation limiter per server process. */
-export const roomLimiter: RoomLimiter = (g.__roomLimiter ??= createRoomLimiter());
+/**
+ * One room-creation limiter per server process. Table Order and Shop Pulse share it, and offices and mobile
+ * carriers put many visitors behind one IP, so it allows 40 an hour (Booking and Queue keep the default 20).
+ */
+export const ROOMS_PER_HOUR = 40;
+export const roomLimiter: RoomLimiter = (g.__roomLimiter ??= createRoomLimiter({ perHour: ROOMS_PER_HOUR }));
 
 export const err = (status: number, error: string) => Response.json({ error }, { status, headers: { "Cache-Control": "no-store" } });
 

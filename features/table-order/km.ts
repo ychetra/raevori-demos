@@ -46,6 +46,8 @@ export const T = {
     no: { en: "Not warmed", km: "មិនកំដៅ" },
   },
   ui: {
+    tooMany: { en: "Too many demos from your network right now. Try again in a while.", km: "បណ្តាញរបស់អ្នកបានបង្កើតការសាកល្បងច្រើនពេកហើយ។ សូមសាកម្តងទៀតបន្តិចក្រោយ។" },
+    createFailed: { en: "Couldn't start the demo. Reload to try again.", km: "មិនអាចចាប់ផ្តើមការសាកល្បងបានទេ។ សូមផ្ទុកទំព័រឡើងវិញ ដើម្បីសាកម្តងទៀត។" },
     viewCart: { en: "View cart", km: "មើលកន្ត្រក" },
     items: { en: "items", km: "មុខ" },
     item: { en: "item", km: "មុខ" },

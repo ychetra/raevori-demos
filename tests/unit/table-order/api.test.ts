@@ -38,8 +38,8 @@ describe("rooms API", () => {
     expect(((await res.json()) as { orders: unknown[] }).orders).toHaveLength(2);
   });
 
-  test("one IP gets 20 rooms an hour; the 21st is 429 too_many_rooms, another IP still gets a room", async () => {
-    for (let i = 0; i < 20; i++) expect((await createRoom(roomReq("203.0.113.9"))).status).toBe(201);
+  test("one IP gets 40 rooms an hour (Table Order and Shop Pulse share it); the 41st is 429 too_many_rooms, another IP still gets a room", async () => {
+    for (let i = 0; i < 40; i++) expect((await createRoom(roomReq("203.0.113.9"))).status).toBe(201);
     const res = await createRoom(roomReq("203.0.113.9"));
     expect(res.status).toBe(429);
     expect(res.headers.get("cache-control")).toBe("no-store");

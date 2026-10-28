@@ -70,3 +70,18 @@ test("a phone that drops offline catches up when it reconnects", async ({ browse
   await phoneCtx.setOffline(false);
   await expect(phone.locator('[data-status="ready"]')).toBeVisible({ timeout: 15_000 });
 });
+
+test("room creation refused (429) shows a message in place of the kitchen board", async ({ page }) => {
+  await page.route("**/api/rooms", (r) =>
+    r.request().method() === "POST" ? r.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: "too_many_rooms" }) }) : r.continue(),
+  );
+  await page.goto("/table-order");
+  await expect(page.getByRole("region", { name: "Kitchen board" }).getByRole("alert")).toHaveText("Too many demos from your network right now. Try again in a while.");
+  await expect(page.locator("[data-menu-url]")).toHaveCount(0);
+});
+
+test("room creation failing for another reason asks for a reload", async ({ page }) => {
+  await page.route("**/api/rooms", (r) => (r.request().method() === "POST" ? r.abort("failed") : r.continue()));
+  await page.goto("/table-order");
+  await expect(page.getByRole("region", { name: "Kitchen board" }).getByRole("alert")).toHaveText("Couldn't start the demo. Reload to try again.");
+});

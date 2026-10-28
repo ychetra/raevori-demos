@@ -90,3 +90,18 @@ test("after midnight the header says closed until 7:00", async ({ page }) => {
   await openDashboard(page);
   await expect(page.locator("[data-closed]")).toHaveText("Closed · opens 7:00");
 });
+
+test("room creation refused (429) shows a message in place of the QR", async ({ page }) => {
+  await page.route("**/api/rooms", (r) =>
+    r.request().method() === "POST" ? r.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: "too_many_rooms" }) }) : r.continue(),
+  );
+  await page.goto("/shop-pulse");
+  await expect(page.locator("[data-live-feed]").getByRole("alert")).toHaveText("Too many demos from your network right now. Try again in a while.");
+  await expect(page.locator("[data-menu-url]")).toHaveCount(0);
+});
+
+test("room creation failing for another reason asks for a reload", async ({ page }) => {
+  await page.route("**/api/rooms", (r) => (r.request().method() === "POST" ? r.abort("failed") : r.continue()));
+  await page.goto("/shop-pulse");
+  await expect(page.locator("[data-live-feed]").getByRole("alert")).toHaveText("Couldn't start the demo. Reload to try again.");
+});

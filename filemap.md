@@ -10,7 +10,7 @@
 - `features/table-order/format.ts` — optionSummary(), ageLabel(); `api.ts` — client fetch helpers; `useRoom.ts` — live orders hook (SSE + reconnect + closed)
 - `features/table-order/ui/` — Kitchen (laptop board + QR), CustomerApp (phone flow), ItemSheet, MenuArt (SVG illustrations)
 - `app/table-order/page.tsx` — kitchen page; `app/table-order/menu/page.tsx` — phone menu (noindex)
-- `features/table-order/server.ts` — the process-wide store singleton, room-creation limiter (20 per IP per rolling hour) + error→HTTP mapping
+- `features/table-order/server.ts` — the process-wide store singleton, room-creation limiter (40 per IP per rolling hour, shared by Table Order and Shop Pulse) + error→HTTP mapping
 - `app/api/rooms/**` — room API: create, snapshot, post order, advance order, SSE events
 - `features/table-order/pricing.ts` — priceOrder(): server-side prices from MENU only; `store.ts` — in-memory RoomStore (rooms, orders, live subscribers, expiry)
 - `features/shop-assistant/` — Shop Assistant catalog, tools, chat engine, screens (Tasks 8-11)

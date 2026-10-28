@@ -29,6 +29,8 @@ export const T = {
     { en: "Dec", km: "ធ្នូ" },
   ],
   ui: {
+    tooMany: { en: "Too many demos from your network right now. Try again in a while.", km: "បណ្តាញរបស់អ្នកបានបង្កើតការសាកល្បងច្រើនពេកហើយ។ សូមសាកម្តងទៀតបន្តិចក្រោយ។" },
+    createFailed: { en: "Couldn't start the demo. Reload to try again.", km: "មិនអាចចាប់ផ្តើមការសាកល្បងបានទេ។ សូមផ្ទុកទំព័រឡើងវិញ ដើម្បីសាកម្តងទៀត។" },
     salesToday: { en: "Sales today", km: "ការលក់ថ្ងៃនេះ" },
     orders: { en: "Orders", km: "ការកម្មង់" },
     avgOrder: { en: "Average order", km: "ការកម្មង់ជាមធ្យម" },

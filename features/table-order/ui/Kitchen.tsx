@@ -3,9 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Qr } from "@/components/shared/Qr";
+import { pick, type Text } from "@/lib/i18n";
 import { usd } from "@/lib/money";
-import { advanceOrder, createRoom } from "../api";
+import { advanceOrder, createRoom, CreateRoomError } from "../api";
 import { ageLabel, optionSummary } from "../format";
+import { T } from "../km";
 import type { Order, OrderStatus } from "../types";
 import { useRoom } from "../useRoom";
 
@@ -26,6 +28,7 @@ export function Kitchen() {
   const { orders, status } = useRoom(room);
   const [now, setNow] = useState<number | null>(null);
   const [origin, setOrigin] = useState("");
+  const [createError, setCreateError] = useState<Text | null>(null);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -34,7 +37,12 @@ export function Kitchen() {
     return () => clearInterval(t);
   }, []);
 
-  const start = () => createRoom().then((id) => router.replace(`/table-order?room=${id}`));
+  const start = () => {
+    setCreateError(null);
+    createRoom()
+      .then((id) => router.replace(`/table-order?room=${id}`))
+      .catch((e) => setCreateError(e instanceof CreateRoomError && e.status === 429 ? T.ui.tooMany : T.ui.createFailed));
+  };
   useEffect(() => {
     if (!room) start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,7 +69,7 @@ export function Kitchen() {
                 <Qr value={menuUrl} label={`QR code to order from table ${TABLE}`} className="w-[180px]" />
               </a>
             ) : (
-              <div className="size-full animate-pulse rounded-xl bg-paper" />
+              <div className={`size-full rounded-xl bg-paper ${createError ? "" : "animate-pulse"}`} />
             )}
           </div>
           <p className="mt-3 font-semibold">Scan to order from Table {TABLE}</p>
@@ -98,7 +106,11 @@ export function Kitchen() {
           </div>
         </div>
 
-        {status === "closed" ? (
+        {createError ? (
+          <div role="alert" className="grid min-h-[340px] place-items-center px-4 text-center">
+            <p className="max-w-[36ch] text-[15px]">{pick(createError, "en")}</p>
+          </div>
+        ) : status === "closed" ? (
           <div className="grid min-h-[340px] place-items-center text-center">
             <div>
               <p className="text-[18px] font-semibold">This demo table has closed</p>

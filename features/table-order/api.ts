@@ -2,9 +2,16 @@ import type { CartLine, Order } from "./types";
 
 export type PlaceResult = { ok: true; order: Order } | { ok: false; error: "full" | "not_found" | "failed" };
 
+/** Thrown by createRoom; `status` is 429 when this network has made too many demo rooms. */
+export class CreateRoomError extends Error {
+  constructor(readonly status: number) {
+    super(`create room ${status}`);
+  }
+}
+
 export async function createRoom(): Promise<string> {
   const res = await fetch("/api/rooms", { method: "POST" });
-  if (!res.ok) throw new Error(`create room ${res.status}`);
+  if (!res.ok) throw new CreateRoomError(res.status);
   return ((await res.json()) as { id: string }).id;
 }
 
