@@ -92,7 +92,7 @@ describe("queues API", () => {
     ["bad JSON", "{not json"],
     ["no counter", {}],
     ["counter 0", { counter: 0 }],
-    ["counter 3", { counter: 3 }],
+    ["counter 5", { counter: 5 }],
     ["counter as text", { counter: "1" }],
   ])("call and recall with %s are a 400", async (_name, body) => {
     const id = await newQueue();

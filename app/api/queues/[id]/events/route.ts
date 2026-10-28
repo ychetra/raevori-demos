@@ -1,9 +1,9 @@
-import { err, store } from "@/features/queue/server";
+import { err, publicQueue, store } from "@/features/queue/server";
 import type { QueueEvent } from "@/features/queue/types";
 
 export const dynamic = "force-dynamic";
 
-/** Live queue updates as Server-Sent Events: a snapshot first, then each changed ticket. */
+/** Live queue updates as Server-Sent Events: a snapshot (tickets and config, never the PIN) first, then each changed ticket and each config change. */
 export async function GET(req: Request, ctx: RouteContext<"/api/queues/[id]/events">) {
   const { id } = await ctx.params;
   const queue = store.get(id);
@@ -14,7 +14,7 @@ export async function GET(req: Request, ctx: RouteContext<"/api/queues/[id]/even
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const send = (e: QueueEvent | { type: "closed" }) => controller.enqueue(enc.encode(`data: ${JSON.stringify(e)}\n\n`));
-      send({ type: "snapshot", tickets: queue.tickets });
+      send({ type: "snapshot", ...publicQueue(queue) });
       const off = store.subscribe(id, send);
       // Pings keep proxies from closing the stream; they also notice when the queue has expired.
       const ping = setInterval(() => {

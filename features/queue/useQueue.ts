@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { defaultConfig } from "./admin";
 import { queueExists } from "./api";
-import type { QueueEvent, Ticket } from "./types";
+import type { QueueConfig, QueueEvent, Ticket } from "./types";
 
 export type QueueStatus = "connecting" | "live" | "closed";
 
 /**
- * Live tickets for a queue, in take order. Reconnects after drops (the server resends a full snapshot, so a phone
- * that was offline catches up on calls it missed) and reports "closed" once the queue is gone.
+ * Live tickets for a queue, in take order, and its config (services, counters, settings; the defaults until the first snapshot).
+ * Reconnects after drops (the server resends a full snapshot, so a phone that was offline catches up on calls it missed)
+ * and reports "closed" once the queue is gone.
  */
-export function useQueue(queueId: string | null): { tickets: Ticket[]; status: QueueStatus } {
+export function useQueue(queueId: string | null): { tickets: Ticket[]; config: QueueConfig; status: QueueStatus } {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [config, setConfig] = useState<QueueConfig>(defaultConfig);
   const [status, setStatus] = useState<QueueStatus>("connecting");
 
   useEffect(() => {
@@ -26,13 +29,16 @@ export function useQueue(queueId: string | null): { tickets: Ticket[]; status: Q
         const e = JSON.parse(m.data) as QueueEvent | { type: "closed" };
         if (e.type === "snapshot") {
           setTickets(e.tickets);
+          setConfig({ services: e.services, counters: e.counters, settings: e.settings });
           setStatus("live");
         } else if (e.type === "ticket") {
           setTickets((prev) => {
             const i = prev.findIndex((t) => t.id === e.ticket.id);
             return i < 0 ? [...prev, e.ticket] : prev.map((t) => (t.id === e.ticket.id ? e.ticket : t));
           });
-        } else {
+        } else if (e.type === "config") {
+          setConfig({ services: e.services, counters: e.counters, settings: e.settings });
+        } else if (e.type === "closed") {
           setStatus("closed");
           es?.close();
           stopped = true;
@@ -62,5 +68,5 @@ export function useQueue(queueId: string | null): { tickets: Ticket[]; status: Q
     };
   }, [queueId]);
 
-  return { tickets, status };
+  return { tickets, config, status };
 }

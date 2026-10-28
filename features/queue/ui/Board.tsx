@@ -7,10 +7,15 @@ import { Qr } from "@/components/shared/Qr";
 import { pick, type Lang, type Text } from "@/lib/i18n";
 import { callNext, createQueue, CreateQueueError, recallTicket } from "../api";
 import { T } from "../km";
-import { COUNTERS, type Counter, type Ticket } from "../types";
+import { serviceName } from "../admin";
+import type { Ticket } from "../types";
 import { useQueue } from "../useQueue";
 
 const AUTO_MS = 20_000;
+
+// The board shows two counters for now; the queue admin's counters 3-4 and closed counters reach it with the Task 29 screens.
+type Counter = 1 | 2;
+const COUNTERS: Counter[] = [1, 2];
 const FLASH_MS = 3000;
 
 const clock = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Phnom_Penh", hour: "2-digit", minute: "2-digit", hour12: false });
@@ -39,7 +44,7 @@ export function Board() {
   const router = useRouter();
   const params = useSearchParams();
   const room = params.get("room");
-  const { tickets, status } = useQueue(room);
+  const { tickets, config, status } = useQueue(room);
   const [lang, setLang] = useState<Lang>("en");
   const [origin, setOrigin] = useState("");
   const [now, setNow] = useState<number | null>(null);
@@ -57,7 +62,7 @@ export function Board() {
   const start = () => {
     setCreateError(null);
     createQueue()
-      .then((id) => router.replace(`/queue?room=${id}`))
+      .then(({ id }) => router.replace(`/queue?room=${id}`))
       .catch((e) => setCreateError(e instanceof CreateQueueError && e.status === 429 ? T.board.tooMany : T.board.createFailed));
   };
   useEffect(() => {
@@ -194,7 +199,7 @@ export function Board() {
                     {line.slice(0, 6).map((w) => (
                       <li key={w.id} data-ticket={w.number} className="min-w-0 rounded-[14px] border border-ink-line bg-ink-surface px-3 py-2.5 animate-[ticket-in_.45s_var(--ease-out-expo)]">
                         <b className="block text-[20px] leading-tight font-semibold tracking-[-0.02em] tabular-nums">{w.number}</b>
-                        <span className="block truncate text-[12px] text-ink-muted">{t(T.services[w.service])}</span>
+                        <span className="block truncate text-[12px] text-ink-muted">{t(serviceName(config.services, w.service))}</span>
                       </li>
                     ))}
                   </ol>

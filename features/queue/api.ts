@@ -1,6 +1,7 @@
-import type { CallResult, Counter, Service, Ticket } from "./types";
+import type { CallResult, Counter, ServiceId, Ticket } from "./types";
 
-export type TakeResult = { ok: true; ticket: Ticket } | { ok: false; error: "full" | "not_found" | "failed" };
+/** hidden: the owner hid that service after the phone loaded it. */
+export type TakeResult = { ok: true; ticket: Ticket } | { ok: false; error: "full" | "not_found" | "hidden" | "failed" };
 
 const base = (room: string) => `/api/queues/${encodeURIComponent(room)}`;
 const postJson = (url: string, body?: unknown) =>
@@ -13,10 +14,11 @@ export class CreateQueueError extends Error {
   }
 }
 
-export async function createQueue(): Promise<string> {
+/** A new queue; `pin` is its owner-admin PIN, told only to the page that created the queue. */
+export async function createQueue(): Promise<{ id: string; pin: string }> {
   const res = await fetch("/api/queues", { method: "POST" });
   if (!res.ok) throw new CreateQueueError(res.status);
-  return ((await res.json()) as { id: string }).id;
+  return (await res.json()) as { id: string; pin: string };
 }
 
 export async function queueExists(id: string): Promise<boolean> {
@@ -24,12 +26,13 @@ export async function queueExists(id: string): Promise<boolean> {
   return res.ok;
 }
 
-export async function takeTicket(room: string, service: Service): Promise<TakeResult> {
+export async function takeTicket(room: string, service: ServiceId): Promise<TakeResult> {
   try {
     const res = await postJson(`${base(room)}/tickets`, { service });
     if (res.status === 201) return { ok: true, ticket: (await res.json()) as Ticket };
     if (res.status === 429) return { ok: false, error: "full" };
     if (res.status === 404) return { ok: false, error: "not_found" };
+    if (res.status === 409) return { ok: false, error: "hidden" };
     return { ok: false, error: "failed" };
   } catch {
     return { ok: false, error: "failed" };

@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Staff "Call next" for one counter: answers `{ done, called }`. The board's auto-call sends `auto: true`, which
- * also tops the line up with walk-ins; a staff click doesn't, so staff can still empty the line.
+ * also tops the line up with walk-ins; a staff click doesn't, so staff can still empty the line. A closed counter is 409 counter_closed.
  */
 export async function POST(req: Request, ctx: RouteContext<"/api/queues/[id]/call">) {
   const { id } = await ctx.params;

@@ -6,6 +6,7 @@ import { LangToggle } from "@/components/shared/LangToggle";
 import { PhoneFrame } from "@/components/shared/PhoneFrame";
 import { pick, type Lang, type Text } from "@/lib/i18n";
 import { leaveQueue, takeTicket } from "../api";
+import { serviceName } from "../admin";
 import { T } from "../km";
 import { position, waitMinutes } from "../store";
 import { PREFIX, SERVICES, type Service, type Ticket } from "../types";
@@ -122,9 +123,9 @@ export function TicketApp() {
             ) : view === "loading" ? null : view === "choose" ? (
               <Choose lang={lang} service={service} onPick={setService} onTake={take} busy={busy} error={error} waiting={live.status === "live" ? waitingCount : null} />
             ) : view === "finished" ? (
-              <Finished ticket={ticket!} lang={lang} onAgain={reset} />
+              <Finished ticket={ticket!} service={serviceName(live.config.services, ticket!.service)} lang={lang} onAgain={reset} />
             ) : (
-              <TicketView ticket={ticket!} lang={lang} room={room!} ahead={live.status === "live" ? position(live.tickets, ticket!.id) : null} onLeft={(x) => setMine(x)} />
+              <TicketView ticket={ticket!} service={serviceName(live.config.services, ticket!.service)} lang={lang} room={room!} ahead={live.status === "live" ? position(live.tickets, ticket!.id) : null} onLeft={(x) => setMine(x)} />
             )}
           </main>
         </div>
@@ -199,7 +200,7 @@ function Choose({
   );
 }
 
-function TicketView({ ticket, lang, room, ahead, onLeft }: { ticket: Ticket; lang: Lang; room: string; ahead: number | null; onLeft: (t: Ticket) => void }) {
+function TicketView({ ticket, service, lang, room, ahead, onLeft }: { ticket: Ticket; service: Text; lang: Lang; room: string; ahead: number | null; onLeft: (t: Ticket) => void }) {
   const t = (x: Text) => pick(x, lang);
   const [confirm, setConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -230,7 +231,7 @@ function TicketView({ ticket, lang, room, ahead, onLeft }: { ticket: Ticket; lan
         <p data-number className="mt-1 text-[64px] leading-none font-semibold tracking-[-0.05em] tabular-nums">
           {ticket.number}
         </p>
-        <p className="mt-2 text-[14px] text-muted">{t(T.services[ticket.service])}</p>
+        <p className="mt-2 text-[14px] text-muted">{t(service)}</p>
       </div>
 
       {called ? (
@@ -351,7 +352,7 @@ function CalledOverlay({ ticket, lang }: { ticket: Ticket; lang: Lang }) {
   );
 }
 
-function Finished({ ticket, lang, onAgain }: { ticket: Ticket; lang: Lang; onAgain: () => void }) {
+function Finished({ ticket, service, lang, onAgain }: { ticket: Ticket; service: Text; lang: Lang; onAgain: () => void }) {
   const t = (x: Text) => pick(x, lang);
   const done = ticket.status === "done";
   return (
@@ -366,7 +367,7 @@ function Finished({ ticket, lang, onAgain }: { ticket: Ticket; lang: Lang; onAga
       <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.03em]">{t(done ? T.ticket.doneTitle : T.ticket.leftTitle)}</h1>
       <p className="mt-1 text-[13.5px] text-muted">{t(done ? T.ticket.doneBody : T.ticket.leftBody)}</p>
       <p className="mt-4 text-[13px] text-muted tabular-nums">
-        {ticket.number} · {t(T.services[ticket.service])}
+        {ticket.number} · {t(service)}
         {done && ticket.counter && ` · ${t(T.counter)} ${ticket.counter}`}
       </p>
       {done && <Progress step={4} lang={lang} />}
