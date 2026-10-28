@@ -3,8 +3,17 @@ import { expect, test, type Page } from "@playwright/test";
 // Viewports and clocks are set per test, so each runs once (in the desktop project).
 test.beforeEach(({}, info) => test.skip(info.project.name !== "desktop", "runs once"));
 
-/** Phnom Penh is UTC+7 all year. */
-const phnomPenh = (hhmm: string) => new Date(`2026-10-28T${hhmm}:00+07:00`);
+/**
+ * The next `hh:mm` Phnom Penh after the real time. The page jumps ahead to the newest live order, which the
+ * server stamps with the real time, so a faked clock must be ahead of the server's or the page shows the real hour.
+ */
+function phnomPenh(hhmm: string): Date {
+  const [h, m] = hhmm.split(":").map(Number);
+  const pp = new Date(Date.now() + 7 * 3600_000); // UTC fields read as Phnom Penh wall-clock time
+  let at = Date.UTC(pp.getUTCFullYear(), pp.getUTCMonth(), pp.getUTCDate(), h, m) - 7 * 3600_000;
+  if (at <= Date.now() + 60_000) at += 24 * 3600_000;
+  return new Date(at);
+}
 
 async function openDashboard(page: Page) {
   await page.goto("/shop-pulse");

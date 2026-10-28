@@ -37,7 +37,7 @@ Resume rule: tick a task's checkbox only after the orchestrator accepts it and i
 - [x] Task 20: Smart Queue screens
 - [x] Task 21: Smart Queue end-to-end check
 - [x] Task 22: Booking domain and API (spec `docs/SPEC-BOOKING.md`, added 2026-10-28 while the owner was away; owner to review)
-- [ ] Task 23: Booking screens
+- [x] Task 23: Booking screens
 - [ ] Task 24: Booking end-to-end check
 
 Owner hand-off points: after Task 2 (approve designs), after Task 7 and Task 12 (try each demo), Task 10 and 14 (accounts). Before every hand-off the orchestrator runs the full test suite and reviews screenshots at 390px and 1280px itself.
