@@ -10,11 +10,11 @@ import { pick, type Lang, type Text } from "@/lib/i18n";
 import { holdSlot, payHold } from "../api";
 import { availability } from "../availability";
 import { T } from "../km";
-import { balanceDue, DEPOSIT, HOLD_MS, SERVICES, STYLISTS } from "../salon";
-import type { Booking, ServiceId, StylistId } from "../types";
+import { balanceDue, HOLD_MS } from "../salon";
+import type { Booking, SalonConfig, ServiceId, StylistId } from "../types";
 import { useBooking } from "../useBooking";
 import { firstDayWithTimes } from "./days";
-import { bookingDays, bookingIcs, dayLabel, dayParts, dollars, fill, hhmm, mmss, withDeposit } from "./format";
+import { bookingDays, bookingIcs, dayLabel, dayParts, dayTimeLabel, dollars, fill, hhmm, mmss, stylistName, withDeposit } from "./format";
 
 type Step = "service" | "stylist" | "time" | "details" | "pay" | "done";
 const STEP_NUMBER: Partial<Record<Step, number>> = { service: 1, stylist: 2, time: 3, details: 4 };
@@ -50,6 +50,9 @@ export function BookApp() {
   const params = useSearchParams();
   const room = params.get("room");
   const live = useBooking(room);
+  const config = live.config;
+  const ready = live.status === "live";
+  const deposit = config.settings.deposit;
   const [lang, setLang] = useState<Lang>("en");
   const [now, setNow] = useState<number | null>(null);
   const [step, setStep] = useState<Step>("service");
@@ -116,6 +119,12 @@ export function BookApp() {
   const holdLeft = current?.status === "held" && deadline !== null && now !== null ? Math.min(HOLD_MS, deadline - now) : null;
   useEffect(() => {
     if (step !== "pay" || !current) return;
+    // The salon cancelled the hold while paying: show the cancelled confirmation.
+    if (current.status === "cancelled") {
+      if (room) saveMine(room, current);
+      setStep("done");
+      return;
+    }
     if (current.status === "expired" || (holdLeft !== null && holdLeft <= 0)) backToTimes(T.book.expired);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, current?.status, now]);
@@ -128,10 +137,10 @@ export function BookApp() {
     [live.bookings],
   );
   const times = useMemo(
-    () => (service && day !== null && now !== null && live.status === "live" ? availability(visible, service, stylist, day, now) : null),
+    () => (service && day !== null && now !== null && live.status === "live" ? availability(visible, service, stylist, day, now, config) : null),
     // Recompute on the minute, not every second.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [visible, service, stylist, day, live.status, now === null ? null : Math.floor(now / 60_000)],
+    [visible, service, stylist, day, live.status, config, now === null ? null : Math.floor(now / 60_000)],
   );
   const [start, setStart] = useState<number | null>(null);
 
@@ -147,6 +156,8 @@ export function BookApp() {
       setMine(r.booking);
       setDeadline(until);
       setNotice(null);
+      // No deposit to pay: confirm the hold at once.
+      if (r.booking.deposit === 0) return confirmHold(r.booking);
       setStep("pay");
     } else if (r.error === "taken") {
       setStart(null);
@@ -155,11 +166,12 @@ export function BookApp() {
     else setError(r.error === "full" ? T.book.full : r.error === "invalid" ? T.book.invalid : T.book.failed);
   };
 
-  const pay = async () => {
-    if (!room || !mine) return;
+  const pay = () => (mine ? confirmHold(mine) : undefined);
+  async function confirmHold(held: Booking) {
+    if (!room) return;
     setBusy(true);
     setError(null);
-    const r = await payHold(room, mine.id);
+    const r = await payHold(room, held.id);
     setBusy(false);
     if (r.ok) {
       saveMine(room, r.booking);
@@ -207,11 +219,11 @@ export function BookApp() {
   const pickStylist = (s: StylistId | "any") => {
     setStylist(s);
     setStart(null);
-    if (service && now !== null && live.status === "live") setDayIndex(firstDayWithTimes(visible, service, s, bookingDays(now), now));
+    if (service && now !== null && live.status === "live") setDayIndex(firstDayWithTimes(visible, service, s, bookingDays(now), now, config));
     else setDayIndex(0);
     go("time");
   };
-  const summary = [service && t(T.services[service]), stylist && (stylist === "any" ? t(T.anyone) : t(T.stylists[stylist])), start !== null && `${dayLabel(start, lang)} · ${hhmm(start)}`];
+  const summary = [service && t(T.services[service]), stylist && (stylist === "any" ? t(T.anyone) : stylistName(config, stylist, lang)), start !== null && `${dayLabel(start, lang)} · ${hhmm(start)}`];
 
   return (
     <div ref={phoneRef} lang={lang} className="md:grid md:min-h-[calc(100dvh-36px)] md:place-items-center md:p-6">
@@ -219,7 +231,7 @@ export function BookApp() {
         <div data-scroll className={`flex h-full flex-col overflow-y-auto ${view === "pay" ? "bg-[#efe9e9]" : ""}`}>
           <header className="bg-gradient-to-br from-accent to-[#24311d] px-4 pt-4 pb-4 text-[#f4f1e8]">
             <div className="flex items-center justify-between gap-3">
-              <p className="min-w-0 text-[16px] font-semibold tracking-[-0.02em]">{t(T.salon)}</p>
+              <p data-salon-name className="min-w-0 truncate text-[16px] font-semibold tracking-[-0.02em]">{ready ? config.settings.name : " "}</p>
               <LangToggle lang={lang} onChange={setLang} tone="glass" />
             </div>
           </header>
@@ -228,18 +240,28 @@ export function BookApp() {
               <Closed lang={lang} />
             ) : view === "service" ? (
               <Shell lang={lang} step={step} title={t(T.book.pickService)}>
-                <Choices>
-                  {SERVICES.map((s) => (
-                    <Choice key={s.id} on={service === s.id} onClick={() => (setService(s.id), setStart(null), go("stylist"))} title={t(T.services[s.id])} line={`${s.minutes} ${t(T.min)}`} right={dollars(s.price)} />
-                  ))}
-                </Choices>
+                {ready ? (
+                  <Choices>
+                    {config.services
+                      .filter((s) => !s.hidden)
+                      .map((s) => (
+                        <Choice key={s.id} on={service === s.id} onClick={() => (setService(s.id), setStart(null), go("stylist"))} title={t(T.services[s.id])} line={`${s.minutes} ${t(T.min)}`} right={dollars(s.price)} />
+                      ))}
+                  </Choices>
+                ) : (
+                  <div aria-hidden="true" className="flex flex-col gap-2.5">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <div key={i} className="h-[66px] animate-pulse rounded-[16px] bg-paper" />
+                    ))}
+                  </div>
+                )}
               </Shell>
             ) : view === "stylist" ? (
               <Shell lang={lang} step={step} title={t(T.book.pickStylist)} onBack={() => go("service")} summary={summary.slice(0, 1)}>
                 <Choices>
                   <Choice on={stylist === "any"} onClick={() => pickStylist("any")} title={t(T.anyone)} line={t(T.book.anyoneLine)} />
-                  {STYLISTS.map((s) => (
-                    <Choice key={s} on={stylist === s} onClick={() => pickStylist(s)} title={t(T.stylists[s])} />
+                  {config.stylists.map((s) => (
+                    <Choice key={s.id} on={stylist === s.id} onClick={() => pickStylist(s.id)} title={pick(s.name, lang)} />
                   ))}
                 </Choices>
               </Shell>
@@ -339,9 +361,9 @@ export function BookApp() {
                   )}
                   <div className="mt-auto pt-5">
                     <button type="submit" disabled={busy || !name.trim() || start === null} className="min-h-[52px] w-full rounded-[14px] bg-khqr text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40">
-                      {withDeposit(T.book.payDeposit, lang)}
+                      {deposit > 0 ? withDeposit(T.book.payDeposit, lang, deposit) : t(T.book.confirmBooking)}
                     </button>
-                    <p className="mt-2 text-center text-[11.5px] text-muted">{t(T.book.payNote)}</p>
+                    <p className="mt-2 text-center text-[11.5px] text-muted">{t(deposit > 0 ? T.book.payNote : T.book.noDepositNote)}</p>
                   </div>
                 </form>
               </Shell>
@@ -349,7 +371,7 @@ export function BookApp() {
               <>
                 <h1 className="text-[20px] leading-tight font-semibold tracking-[-0.02em]">{t(T.book.payTitle)}</h1>
                 <p className="mt-1 text-[13px] text-muted">
-                  {t(T.services[current.service])} · {t(T.stylists[current.stylist])} · {dayLabel(current.start, lang)} {hhmm(current.start)}
+                  {t(T.services[current.service])} · {stylistName(config, current.stylist, lang)} · {dayLabel(current.start, lang)} {hhmm(current.start)}
                 </p>
                 <p className="mt-3 flex items-baseline justify-between gap-3 rounded-[12px] bg-white px-3 py-2.5 text-[13px]">
                   <span>{t(T.book.heldFor)}</span>
@@ -358,7 +380,7 @@ export function BookApp() {
                   </b>
                 </p>
                 <div className="mt-4">
-                  <KhqrCard amount={DEPOSIT} merchant={t(T.salon)} lang={lang} onPaid={pay} busy={busy} />
+                  <KhqrCard amount={current.deposit} merchant={config.settings.name} lang={lang} onPaid={pay} busy={busy} />
                 </div>
                 {error && (
                   <p role="alert" className="mt-3 rounded-[12px] bg-white px-3 py-2.5 text-center text-[13px] text-khqr">
@@ -367,7 +389,7 @@ export function BookApp() {
                 )}
               </>
             ) : view === "done" && current ? (
-              <Done booking={current} lang={lang} now={now ?? Date.now()} onAgain={again} />
+              <Done booking={current} config={config} lang={lang} now={now ?? Date.now()} onAgain={again} />
             ) : null}
           </main>
         </div>
@@ -421,13 +443,18 @@ function Choice({ on, onClick, title, line, right }: { on: boolean; onClick: () 
   );
 }
 
-function Done({ booking: b, lang, now, onAgain }: { booking: Booking; lang: Lang; now: number; onAgain: () => void }) {
+/**
+ * The confirmation. It follows the salon live: a move shows "Your booking moved to Thu 29 Oct 15:00" with the new
+ * rows, and a cancel replaces the tick with "Cancelled · deposit refunded" (or kept, or nothing was paid).
+ */
+function Done({ booking: b, config, lang, now, onAgain }: { booking: Booking; config: SalonConfig; lang: Lang; now: number; onAgain: () => void }) {
   const t = (x: Text) => pick(x, lang);
+  const cancelled = b.status === "cancelled";
   const download = () => {
-    const url = URL.createObjectURL(new Blob([bookingIcs(b, lang, now)], { type: "text/calendar;charset=utf-8" }));
+    const url = URL.createObjectURL(new Blob([bookingIcs(b, lang, now, config)], { type: "text/calendar;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "bopha-beauty-booking.ics";
+    a.download = "booking.ics";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -436,34 +463,64 @@ function Done({ booking: b, lang, now, onAgain }: { booking: Booking; lang: Lang
   const rows: [Text, string][] = [
     [T.book.date, dayLabel(b.start, lang)],
     [T.book.time, `${hhmm(b.start)}–${hhmm(b.end)}`],
-    [T.book.stylist, t(T.stylists[b.stylist])],
+    [T.book.stylist, stylistName(config, b.stylist, lang)],
     [T.book.service, t(T.services[b.service])],
   ];
+  const paid = b.at.booked !== undefined && b.deposit > 0;
+  const cancelLine = !paid ? t(T.book.cancelledUnpaid) : b.refund ? t(T.book.cancelledRefunded) : fill(T.book.cancelledKept, lang, { d: dollars(b.deposit) });
   return (
     <div data-booking-status={b.status} className="flex flex-1 flex-col">
-      <span className="mb-3.5 grid size-[52px] place-items-center rounded-[16px] bg-accent">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-          <path d="m5 12.5 4.5 4.5L19 7.5" />
-        </svg>
-      </span>
-      <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.03em]">{t(T.book.doneTitle)}</h1>
-      <dl className="mt-4 divide-y divide-line rounded-[16px] border border-line bg-surface px-3.5">
+      {cancelled ? (
+        <span className="mb-3.5 grid size-[52px] place-items-center rounded-[16px] bg-paper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </span>
+      ) : (
+        <span className="mb-3.5 grid size-[52px] place-items-center rounded-[16px] bg-accent">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+            <path d="m5 12.5 4.5 4.5L19 7.5" />
+          </svg>
+        </span>
+      )}
+      <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.03em]">{t(cancelled ? T.book.cancelledTitle : T.book.doneTitle)}</h1>
+      <div aria-live="polite">
+        {cancelled ? (
+          <div data-cancelled-line className="mt-3 rounded-[12px] bg-paper px-3 py-2.5 text-[14px]">
+            <p className="font-semibold">{cancelLine}</p>
+            {b.cancelReason && <p className="mt-0.5 text-[13px] text-muted">{fill(T.book.salonNote, lang, { r: b.cancelReason })}</p>}
+          </div>
+        ) : (
+          b.movedAt !== undefined && (
+            <p key={b.movedAt} data-moved-line className="mt-3 rounded-[12px] bg-paper px-3 py-2.5 text-[14px] font-semibold animate-[fade-in_.4s_ease-out]">
+              {fill(T.book.movedLine, lang, { t: dayTimeLabel(b.start, lang) })}
+            </p>
+          )
+        )}
+      </div>
+      <dl className={`mt-4 divide-y divide-line rounded-[16px] border border-line bg-surface px-3.5 ${cancelled ? "text-muted" : ""}`}>
         {rows.map(([k, v]) => (
           <div key={k.en} className="flex items-baseline justify-between gap-3 py-2.5 text-[14px]">
             <dt className="text-muted">{t(k)}</dt>
-            <dd className="text-right font-semibold tabular-nums">{v}</dd>
+            <dd className={`text-right font-semibold tabular-nums ${cancelled ? "line-through" : ""}`}>{v}</dd>
           </div>
         ))}
       </dl>
-      <p data-deposit-line className="mt-3 text-[14px] font-medium">
-        {fill(T.book.depositLine, lang, { d: dollars(b.deposit), x: dollars(balanceDue(b)) })}
-      </p>
-      <p className="mt-1 text-[13px] text-muted">{t(T.book.reminder)}</p>
+      {!cancelled && (
+        <>
+          <p data-deposit-line className="mt-3 text-[14px] font-medium">
+            {b.deposit > 0 ? fill(T.book.depositLine, lang, { d: dollars(b.deposit), x: dollars(balanceDue(b)) }) : fill(T.book.noDepositLine, lang, { x: dollars(balanceDue(b)) })}
+          </p>
+          <p className="mt-1 text-[13px] text-muted">{t(T.book.reminder)}</p>
+        </>
+      )}
       <div className="mt-auto flex flex-col gap-2 pt-6">
-        <button type="button" onClick={download} className="min-h-[52px] rounded-[14px] bg-fg text-[15px] font-semibold text-white hover:opacity-90">
-          {t(T.book.addToCalendar)}
-        </button>
-        <button type="button" onClick={onAgain} className="min-h-11 rounded-[14px] border border-line text-[13.5px] font-semibold hover:border-line-strong">
+        {!cancelled && (
+          <button type="button" onClick={download} className="min-h-[52px] rounded-[14px] bg-fg text-[15px] font-semibold text-white hover:opacity-90">
+            {t(T.book.addToCalendar)}
+          </button>
+        )}
+        <button type="button" onClick={onAgain} className={`min-h-11 rounded-[14px] border text-[13.5px] font-semibold ${cancelled ? "border-fg bg-fg text-white hover:opacity-90" : "border-line hover:border-line-strong"}`}>
           {t(T.book.another)}
         </button>
       </div>

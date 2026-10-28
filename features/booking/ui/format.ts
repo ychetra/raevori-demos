@@ -2,21 +2,28 @@ import { hhmm } from "@/features/shop-pulse/ui/format";
 import { DAY_MS, PP_OFFSET_MS, startOfDay } from "@/features/shop-pulse/time";
 import { pick, type Lang, type Text } from "@/lib/i18n";
 import { T } from "../km";
-import { balanceDue, BOOKING_DAYS, DEPOSIT } from "../salon";
-import type { Booking } from "../types";
+import { balanceDue, BOOKING_DAYS, DEFAULT_SALON, DEPOSIT } from "../salon";
+import type { Booking, SalonConfig, StylistId } from "../types";
 
 export { hhmm };
 
-/** Whole dollars: 3 → "$3" (every Booking price is whole). */
-export const dollars = (n: number) => `$${n}`;
+/** Dollars as the salon writes them: whole amounts bare, the rest with cents: 3 → "$3", 2.5 → "$2.50". */
+export const dollars = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
 
 /** Replaces `{key}` placeholders in a picked string. */
 export function fill(t: Text, lang: Lang, values: Record<string, string | number> = {}): string {
   return pick(t, lang).replace(/\{(\w+)\}/g, (m, k: string) => (k in values ? String(values[k]) : m));
 }
 
-/** The default `{d}` (deposit) filler, plus any extra values. */
-export const withDeposit = (t: Text, lang: Lang, values: Record<string, string | number> = {}) => fill(t, lang, { d: dollars(DEPOSIT), ...values });
+/** Fills `{d}` with the deposit (the room's, or the default $3), plus any extra values. */
+export const withDeposit = (t: Text, lang: Lang, deposit: number = DEPOSIT, values: Record<string, string | number> = {}) => fill(t, lang, { d: dollars(deposit), ...values });
+
+/** A stylist's name from the room's roster; a stylist no longer on it falls back to the default names, then to its id. */
+export function stylistName(salon: SalonConfig, id: StylistId, lang: Lang): string {
+  const s = salon.stylists.find((x) => x.id === id);
+  if (s) return pick(s.name, lang);
+  return T.stylists[id] ? pick(T.stylists[id], lang) : id;
+}
 
 const local = (ms: number) => new Date(ms + PP_OFFSET_MS);
 
@@ -25,6 +32,9 @@ export function dayLabel(ms: number, lang: Lang): string {
   const d = local(ms);
   return `${pick(T.weekdays[d.getUTCDay()], lang)} ${d.getUTCDate()} ${pick(T.months[d.getUTCMonth()], lang)}`;
 }
+
+/** "Thu 29 Oct 15:00", Phnom Penh. */
+export const dayTimeLabel = (ms: number, lang: Lang) => `${dayLabel(ms, lang)} ${hhmm(ms)}`;
 
 /** Short weekday and day of month for the day strips, Phnom Penh. */
 export function dayParts(ms: number, lang: Lang): { weekday: string; date: number } {
@@ -53,10 +63,13 @@ export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 const icsTime = (ms: number) => new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 const icsText = (s: string) => s.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1");
 
-/** A one-event iCalendar file for a booking, built in the browser. Times are UTC, so every calendar app shows local time. */
-export function bookingIcs(b: Booking, lang: Lang, now: number): string {
+/**
+ * A one-event iCalendar file for a booking, built in the browser. Times are UTC, so every calendar app shows local time.
+ * Stylist and salon names come from the room's `salon` (an added stylist has no default name).
+ */
+export function bookingIcs(b: Booking, lang: Lang, now: number, salon: SalonConfig = DEFAULT_SALON): string {
   const service = pick(T.services[b.service], lang);
-  const description = `${pick(T.book.stylist, lang)}: ${pick(T.stylists[b.stylist], lang)}. ${fill(T.book.depositLine, lang, { d: dollars(b.deposit), x: dollars(balanceDue(b)) })}`;
+  const description = `${pick(T.book.stylist, lang)}: ${stylistName(salon, b.stylist, lang)}. ${fill(T.book.depositLine, lang, { d: dollars(b.deposit), x: dollars(balanceDue(b)) })}`;
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -67,8 +80,8 @@ export function bookingIcs(b: Booking, lang: Lang, now: number): string {
     `DTSTAMP:${icsTime(now)}`,
     `DTSTART:${icsTime(b.start)}`,
     `DTEND:${icsTime(b.end)}`,
-    `SUMMARY:${icsText(fill(T.book.icsTitle, lang, { s: service }))}`,
-    `LOCATION:${icsText(pick(T.salon, lang))}`,
+    `SUMMARY:${icsText(fill(T.book.icsTitle, lang, { s: service, n: salon.settings.name }))}`,
+    `LOCATION:${icsText(salon.settings.name)}`,
     `DESCRIPTION:${icsText(description)}`,
     "END:VEVENT",
     "END:VCALENDAR",

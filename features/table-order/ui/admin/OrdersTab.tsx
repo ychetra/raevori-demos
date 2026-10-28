@@ -7,7 +7,8 @@ import { cancelOrder, exportUrl, markDone, type AdminFail } from "../../admin-ap
 import { optionSummary } from "../../format";
 import { T } from "../../km";
 import type { Order, OrderStatus } from "../../types";
-import { btnPrimary, btnSecondary, card, input, ppTime, Sheet } from "./parts";
+import { btnDanger, btnPrimary, btnSecondary, card, chip, DownloadLink, input, Sheet } from "@/components/admin/parts";
+import { ppTime } from "./parts";
 
 type Filter = "all" | OrderStatus;
 const FILTERS: Filter[] = ["all", "new", "preparing", "ready", "done", "cancelled"];
@@ -57,7 +58,7 @@ export function OrdersTab({ room, orders, lang, onFail }: Props) {
                 type="button"
                 aria-pressed={filter === f}
                 onClick={() => setFilter(f)}
-                className={`min-h-9 shrink-0 rounded-full border px-3.5 text-[13px] font-medium whitespace-nowrap ${filter === f ? "border-fg bg-fg text-white" : "border-line hover:border-line-strong"}`}
+                className={chip(filter === f)}
               >
                 {t(f === "all" ? T.admin.all : T.admin.status[f])} <span className="tabular-nums opacity-70">{counts[f]}</span>
               </button>
@@ -65,10 +66,7 @@ export function OrdersTab({ room, orders, lang, onFail }: Props) {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t(T.admin.search)} aria-label={t(T.admin.search)} className={`${input} sm:flex-1`} />
-            <a href={exportUrl(room, lang)} download className={`${btnSecondary} inline-flex items-center justify-center gap-2 whitespace-nowrap`}>
-              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>
-              {t(T.admin.download)}
-            </a>
+            <DownloadLink href={exportUrl(room, lang)}>{t(T.admin.download)}</DownloadLink>
           </div>
         </div>
 
@@ -109,7 +107,7 @@ export function OrdersTab({ room, orders, lang, onFail }: Props) {
         </aside>
       ) : (
         current && (
-          <Sheet title={`${t(T.table)} ${current.table} · ${current.id}`} lang={lang} onClose={() => setSelected(null)}>
+          <Sheet title={`${t(T.table)} ${current.table} · ${current.id}`} closeLabel={t(T.admin.close)} onClose={() => setSelected(null)}>
             <Detail key={current.id} order={current} room={room} lang={lang} onFail={onFail} inSheet />
           </Sheet>
         )
@@ -233,7 +231,7 @@ function Detail({ order, room, lang, onFail, inSheet = false }: { order: Order; 
             <input autoFocus value={other} maxLength={120} onChange={(e) => setOther(e.target.value)} placeholder={t(T.admin.otherPlaceholder)} aria-label={t(T.admin.otherReason)} className={`${input} mt-2.5`} />
           )}
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <button type="button" onClick={cancel} disabled={busy} className="min-h-11 rounded-[12px] bg-khqr px-4 text-[14px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50">{t(T.admin.cancelOrder)}</button>
+            <button type="button" onClick={cancel} disabled={busy} className={btnDanger}>{t(T.admin.cancelOrder)}</button>
             <button type="button" onClick={() => setCancelling(false)} disabled={busy} className={btnSecondary}>{t(T.admin.keepOrder)}</button>
           </div>
         </div>

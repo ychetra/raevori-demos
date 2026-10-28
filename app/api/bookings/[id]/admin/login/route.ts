@@ -1,4 +1,4 @@
-import { adminCookie } from "@/features/booking/admin-auth";
+import { adminCookie, clearAdminCookie } from "@/features/booking/admin-auth";
 import { err, guardAdmin, readJson, store } from "@/features/booking/server";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,14 @@ export async function POST(req: Request, ctx: RouteContext<"/api/bookings/[id]/a
   if (result === "locked") return err(429, "too_many_tries");
   if (result === "wrong") return err(401, "wrong_pin");
   return new Response(null, { status: 204, headers: { "Set-Cookie": adminCookie(req, id), "Cache-Control": "no-store" } });
+}
+
+/** Logs this browser out: expires the room's admin cookie. Always 204, so logging out of an expired room works too. */
+export async function DELETE(req: Request, ctx: RouteContext<"/api/bookings/[id]/admin/login">) {
+  const { id } = await ctx.params;
+  // The id goes into the cookie's Path: only plain room ids, so nothing can add cookie attributes.
+  if (!/^[\w-]{1,64}$/.test(id)) return new Response(null, { status: 204 });
+  return new Response(null, { status: 204, headers: { "Set-Cookie": clearAdminCookie(req, id), "Cache-Control": "no-store" } });
 }
 
 /** Whether this browser is logged in to the room's admin: 204 yes, 401 no, 404 unknown room. */

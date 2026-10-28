@@ -60,6 +60,11 @@ export async function adminSession(room: string): Promise<"in" | "out" | "not_fo
   return res.status === 204 ? "in" : res.status === 404 ? "not_found" : "out";
 }
 
+/** Logs this browser out of the room's admin (expires the cookie). Never fails loudly. */
+export async function adminLogout(room: string): Promise<void> {
+  await fetch(`${base(room)}/login`, { method: "DELETE" }).catch(() => {});
+}
+
 export const updateService = (room: string, service: ServicePatch) => call<Service>(`${base(room)}/services`, "PUT", { service });
 export const updateStylist = (room: string, stylist: StylistPatch) => call<Stylist>(`${base(room)}/stylists`, "PUT", { stylist });
 export const addStylist = (room: string, stylist: NewStylist) => call<Stylist>(`${base(room)}/stylists`, "POST", { stylist });

@@ -4,19 +4,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LangToggle } from "@/components/shared/LangToggle";
 import { Qr } from "@/components/shared/Qr";
-import { HOUR_MS, startOfDay } from "@/features/shop-pulse/time";
+import { startOfDay } from "@/features/shop-pulse/time";
 import { pick, type Lang, type Text } from "@/lib/i18n";
 import { createBookingRoom, CreateBookingError, setBookingStatus } from "../api";
+import { workingHours } from "../availability";
 import { T } from "../km";
-import { CLOSE_HOUR, OPEN_HOUR, SLOT_MS, STYLISTS } from "../salon";
-import type { Booking, VisitStatus } from "../types";
+import { readPin, savePin } from "../pin";
+import { SLOT_MS, toMinutes } from "../salon";
+import type { Booking, SalonConfig, Stylist, VisitStatus } from "../types";
 import { useBooking } from "../useBooking";
 import { dayToFollow } from "./days";
-import { bookingDays, dayLabel, dayParts, firstName, hhmm, shown, withDeposit } from "./format";
+import { bookingDays, dayLabel, dayParts, fill, firstName, hhmm, shown, withDeposit } from "./format";
 
 /** Height of one half-hour row in px. */
 const ROW = 36;
-const ROWS = ((CLOSE_HOUR - OPEN_HOUR) * HOUR_MS) / SLOT_MS;
+const MINUTE_MS = 60_000;
 const FLASH_MS = 3000;
 /** Room above the first hour label so it isn't clipped. */
 const PAD = 8;
@@ -26,7 +28,9 @@ export function Calendar() {
   const router = useRouter();
   const params = useSearchParams();
   const room = params.get("room");
-  const { bookings, status } = useBooking(room);
+  const { bookings, config, status } = useBooking(room);
+  const [pin, setPin] = useState<string | null>(null);
+  useEffect(() => setPin(room ? readPin(room) : null), [room]);
   const [lang, setLang] = useState<Lang>("en");
   const [origin, setOrigin] = useState("");
   const [now, setNow] = useState<number | null>(null);
@@ -45,7 +49,10 @@ export function Calendar() {
   const start = () => {
     setCreateError(null);
     createBookingRoom()
-      .then(({ id }) => router.replace(`/booking?room=${id}`))
+      .then(({ id, pin }) => {
+        savePin(id, pin);
+        router.replace(`/booking?room=${id}`);
+      })
       .catch((e) => setCreateError(e instanceof CreateBookingError && e.status === 429 ? T.board.tooMany : T.board.createFailed));
   };
   useEffect(() => {
@@ -58,7 +65,8 @@ export function Calendar() {
   const flash = useNewBookings(bookings, status === "live");
   const days = now === null ? [] : bookingDays(now);
   const day = days[dayIndex] ?? null;
-  const visible = useMemo(() => (now === null || day === null ? [] : shown(bookings).filter((b) => startOfDay(b.start) === day)), [bookings, now, day]);
+  // Cancelled bookings leave the calendar: their time is free again.
+  const visible = useMemo(() => (now === null || day === null ? [] : shown(bookings).filter((b) => b.status !== "cancelled" && startOfDay(b.start) === day)), [bookings, now, day]);
 
   // A new hold or payment for a day that isn't shown switches the calendar to that day (most evenings that's tomorrow).
   // Keyed by room, so a new room's first snapshot ("Start a new demo") never counts as new bookings.
@@ -73,7 +81,16 @@ export function Calendar() {
     // Only a change in the bookings moves the calendar, not the clock or the staff's own day pick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookings, status]);
-  const latest = flash.size ? bookings.find((b) => flash.has(b.id)) : undefined;
+  // A booking the owner moved to another day takes the calendar there too.
+  useEffect(() => {
+    if (!flash.moved || now === null) return;
+    const i = bookingDays(now).indexOf(startOfDay(flash.moved.start));
+    if (i >= 0 && i !== dayIndex) setDayIndex(i);
+    // Only a new move counts, not the clock or the staff's own day pick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flash.moved]);
+  const latest = flash.ids.size ? bookings.find((b) => flash.ids.has(b.id)) : undefined;
+  const salonName = config.settings.name;
   const link = "underline underline-offset-2 hover:text-accent";
 
   return (
@@ -82,7 +99,7 @@ export function Calendar() {
         <div>
           <p className="text-[12px] font-semibold text-accent">{t(T.board.eyebrow)}</p>
           <h1 className={`mt-1.5 text-[clamp(26px,3vw,30px)] font-semibold ${km ? "leading-[1.35] tracking-normal" : "leading-[1.05] tracking-[-0.04em]"}`}>{t(T.board.headline)}</h1>
-          <p className="mt-2.5 text-[14px] text-muted">{t(T.board.intro)}</p>
+          <p className="mt-2.5 text-[14px] text-muted">{fill(T.board.intro, lang, { n: salonName })}</p>
         </div>
         <div className="rounded-[20px] border border-line bg-surface p-[18px] text-center">
           <div className="mx-auto grid aspect-square w-[180px] place-items-center">
@@ -102,12 +119,24 @@ export function Calendar() {
               {t(T.board.bookHere)}
             </a>
           </p>
+          {room && (
+            <p data-owner-admin className="mt-2.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line pt-2.5 text-[13px]">
+              <a href={`/booking/admin?room=${room}`} target="_blank" rel="noopener" className="font-semibold underline underline-offset-2 hover:text-accent">
+                {t(T.calendar.ownerAdmin)} →
+              </a>
+              {pin && (
+                <span className="text-muted">
+                  {t(T.calendar.pin)} <b data-admin-pin className="font-semibold tracking-[0.12em] text-fg tabular-nums">{pin}</b>
+                </span>
+              )}
+            </p>
+          )}
         </div>
         <ol className="flex flex-col gap-2 text-[13.5px]">
           {T.board.steps.map((s, i) => (
             <li key={s.en} className="flex items-center gap-2.5">
               <b className="grid size-[22px] shrink-0 place-items-center rounded-[7px] bg-fg text-[11px] text-white">{i + 1}</b>
-              {withDeposit(s, lang)}
+              {withDeposit(s, lang, config.settings.deposit)}
             </li>
           ))}
         </ol>
@@ -116,7 +145,7 @@ export function Calendar() {
       <section aria-label={t(T.board.calendarLabel)} className="min-w-0 rounded-[20px] bg-ink p-[18px] text-ink-fg sm:p-[22px]">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-[16px] font-semibold">{t(T.salon)}</h2>
+            <h2 data-salon-name className="text-[16px] font-semibold">{status === "live" ? salonName : " "}</h2>
             <p className="text-[12px] text-ink-muted tabular-nums">
               {day !== null && now !== null ? `${dayLabel(day, lang)}${dayIndex === 0 ? ` · ${hhmm(now)}` : ""}` : " "}
             </p>
@@ -166,7 +195,7 @@ export function Calendar() {
               })}
             </div>
             <p className="mt-2.5 mb-3 text-[12px] text-ink-muted">{t(T.board.staffHint)}</p>
-            <Grid room={room!} day={day} now={now!} bookings={visible} flash={flash} lang={lang} />
+            <Grid room={room!} day={day} now={now!} bookings={visible} config={config} flash={flash.ids} lang={lang} />
           </>
         )}
       </section>
@@ -174,58 +203,89 @@ export function Calendar() {
   );
 }
 
-/** Three stylist columns, half-hour rows 09:00-19:00. Scrolls sideways inside the card when the screen is narrow. */
-function Grid({ room, day, now, bookings, flash, lang }: { room: string; day: number; now: number; bookings: Booking[]; flash: Set<string>; lang: Lang }) {
+/** The calendar's columns for a day: the room's roster, plus any stylist with a booking that day who is no longer on it (after a reset). */
+function columnsFor(config: SalonConfig, bookings: Booking[]): Stylist[] {
+  const extra = [...new Set(bookings.map((b) => b.stylist))].filter((id) => !config.stylists.some((s) => s.id === id));
+  return [...config.stylists, ...extra.map((id): Stylist => ({ id, name: { en: id, km: id }, daysOff: [], hours: { start: config.settings.open, end: config.settings.close } }))];
+}
+
+/**
+ * One column per stylist (up to 5), half-hour rows over the salon's opening hours. A stylist's day off is a muted column
+ * saying "Day off"; hours outside their working hours are muted. Scrolls sideways inside the card when the screen is narrow.
+ */
+function Grid({ room, day, now, bookings, config, flash, lang }: { room: string; day: number; now: number; bookings: Booking[]; config: SalonConfig; flash: Set<string>; lang: Lang }) {
   const t = (x: Text) => pick(x, lang);
-  const open = day + OPEN_HOUR * HOUR_MS;
-  const close = day + CLOSE_HOUR * HOUR_MS;
+  const { settings } = config;
+  const open = day + toMinutes(settings.open) * MINUTE_MS;
+  const close = day + toMinutes(settings.close) * MINUTE_MS;
+  const rows = Math.max(1, (close - open) / SLOT_MS);
+  const height = rows * ROW;
+  const y = (ms: number) => ((ms - open) / SLOT_MS) * ROW;
   const [menu, setMenu] = useState<string | null>(null);
-  const nowTop = now >= open && now <= close ? ((now - open) / SLOT_MS) * ROW : null;
-  const cols = "grid grid-cols-[44px_repeat(3,minmax(0,1fr))]";
+  const nowTop = now >= open && now <= close ? y(now) : null;
+  const columns = columnsFor(config, bookings);
+  const cols = { gridTemplateColumns: `44px repeat(${columns.length}, minmax(0, 1fr))` };
+  // Hour labels on the whole hours inside the opening hours.
+  const firstHour = Math.ceil(toMinutes(settings.open) / 60);
+  const lastHour = Math.floor(toMinutes(settings.close) / 60);
 
   useEffect(() => setMenu(null), [day]);
 
   return (
     <div data-calendar className="-mx-1 overflow-x-auto px-1">
-      <div className="min-w-[480px]">
-        <div className={`${cols} border-b border-ink-line pb-2`}>
+      <div style={{ minWidth: 44 + columns.length * 145 }}>
+        <div className="grid border-b border-ink-line pb-2" style={cols}>
           <span />
-          {STYLISTS.map((s) => (
-            <p key={s} className="truncate px-1.5 text-[13px] font-semibold">
-              {t(T.stylists[s])}
+          {columns.map((s) => (
+            <p key={s.id} data-stylist-name={s.id} className="truncate px-1.5 text-[13px] font-semibold">
+              {pick(s.name, lang)}
             </p>
           ))}
         </div>
-        <div className={`${cols} relative`} style={{ paddingTop: PAD, paddingBottom: PAD }}>
-          <div className="relative" style={{ height: ROWS * ROW }} aria-hidden="true">
-            {Array.from({ length: CLOSE_HOUR - OPEN_HOUR + 1 }, (_, i) => (
-              <span key={i} className="absolute left-0 -translate-y-1/2 text-[10.5px] text-ink-muted tabular-nums" style={{ top: i * 2 * ROW }}>
-                {String(OPEN_HOUR + i).padStart(2, "0")}:00
+        <div className="relative grid" style={{ ...cols, paddingTop: PAD, paddingBottom: PAD }}>
+          <div className="relative" style={{ height }} aria-hidden="true">
+            {Array.from({ length: Math.max(0, lastHour - firstHour + 1) }, (_, i) => (
+              <span key={i} className="absolute left-0 -translate-y-1/2 text-[10.5px] text-ink-muted tabular-nums" style={{ top: y(day + (firstHour + i) * 60 * MINUTE_MS) }}>
+                {String(firstHour + i).padStart(2, "0")}:00
               </span>
             ))}
           </div>
-          {STYLISTS.map((s) => (
-            <div
-              key={s}
-              data-stylist={s}
-              className="relative border-l border-ink-line"
-              style={{
-                height: ROWS * ROW,
-                backgroundImage: `repeating-linear-gradient(to bottom, var(--ink-line) 0 1px, transparent 1px ${ROW * 2}px), repeating-linear-gradient(to bottom, transparent 0 ${ROW}px, rgba(37,44,38,0.5) ${ROW}px ${ROW + 1}px, transparent ${ROW + 1}px ${ROW * 2}px)`,
-              }}
-            >
-              {bookings
-                .filter((b) => b.stylist === s)
-                .map((b) => (
-                  <Block key={b.id} booking={b} top={((b.start - open) / SLOT_MS) * ROW} height={((b.end - b.start) / SLOT_MS) * ROW} flash={flash.has(b.id)} lang={lang} open={menu === b.id} onOpen={() => setMenu(b.id)} />
-                ))}
-              {bookings
-                .filter((b) => b.stylist === s && b.id === menu && b.status === "booked")
-                .map((b) => (
-                  <StatusMenu key={b.id} room={room} booking={b} top={((b.end - open) / SLOT_MS) * ROW} lang={lang} alignRight={s === STYLISTS.at(-1)} onClose={() => setMenu(null)} />
-                ))}
-            </div>
-          ))}
+          {columns.map((s, ci) => {
+            const works = workingHours(s, day, settings);
+            const mine = bookings.filter((b) => b.stylist === s.id && b.end > open && b.start < close);
+            return (
+              <div
+                key={s.id}
+                data-stylist={s.id}
+                data-day-off={works ? undefined : ""}
+                className="relative border-l border-ink-line"
+                style={{
+                  height,
+                  backgroundImage: `repeating-linear-gradient(to bottom, var(--ink-line) 0 1px, transparent 1px ${ROW * 2}px), repeating-linear-gradient(to bottom, transparent 0 ${ROW}px, rgba(37,44,38,0.5) ${ROW}px ${ROW + 1}px, transparent ${ROW + 1}px ${ROW * 2}px)`,
+                }}
+              >
+                {works ? (
+                  <>
+                    {works.from > open && <div aria-hidden="true" className="absolute inset-x-0 top-0 bg-ink-line/55" style={{ height: y(works.from) }} />}
+                    {works.to < close && <div aria-hidden="true" className="absolute inset-x-0 bottom-0 bg-ink-line/55" style={{ top: y(works.to) }} />}
+                  </>
+                ) : (
+                  <div className="absolute inset-0 grid place-items-start justify-center bg-ink-line/55 pt-6">
+                    <span className="rounded-full border border-ink-line px-2.5 py-0.5 text-[12px] font-medium text-ink-muted">{t(T.calendar.dayOff)}</span>
+                  </div>
+                )}
+                {mine.map((b) => {
+                  const top = Math.max(0, y(b.start));
+                  return <Block key={b.id} booking={b} top={top} height={Math.min(height, y(b.end)) - top} flash={flash.has(b.id)} lang={lang} open={menu === b.id} onOpen={() => setMenu(b.id)} />;
+                })}
+                {mine
+                  .filter((b) => b.id === menu && b.status === "booked")
+                  .map((b) => (
+                    <StatusMenu key={b.id} room={room} booking={b} top={y(b.end)} rows={rows} lang={lang} alignRight={ci === columns.length - 1} onClose={() => setMenu(null)} />
+                  ))}
+              </div>
+            );
+          })}
           {nowTop !== null && (
             <div data-now-line aria-hidden="true" className="pointer-events-none absolute right-0 left-0 z-[5]" style={{ top: PAD + nowTop }}>
               <span className="absolute left-0 -translate-y-1/2 rounded-[4px] bg-ink-fg px-1 text-[10px] font-semibold text-ink tabular-nums">{hhmm(now)}</span>
@@ -247,7 +307,7 @@ function Block({ booking: b, top, height, flash, lang, open, onOpen }: { booking
       : b.status === "arrived"
         ? t(T.board.arrived)
         : b.status === "noshow"
-          ? `${t(T.board.noShow)} · ${withDeposit(T.board.depositKept, lang)}`
+          ? `${t(T.board.noShow)} · ${withDeposit(T.board.depositKept, lang, b.deposit)}`
           : t(T.board.depositPaid);
   const tone =
     b.status === "held"
@@ -284,12 +344,12 @@ function Block({ booking: b, top, height, flash, lang, open, onOpen }: { booking
 }
 
 /** Small popover under a booked block: Arrived or No-show. Escape or a click outside closes it. */
-function StatusMenu({ room, booking, top, lang, alignRight, onClose }: { room: string; booking: Booking; top: number; lang: Lang; alignRight: boolean; onClose: () => void }) {
+function StatusMenu({ room, booking, top, rows, lang, alignRight, onClose }: { room: string; booking: Booking; top: number; rows: number; lang: Lang; alignRight: boolean; onClose: () => void }) {
   const t = (x: Text) => pick(x, lang);
   const ref = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  const above = top + 120 > ROWS * ROW;
+  const above = top + 120 > rows * ROW;
   const close = useRef(onClose);
   useEffect(() => {
     close.current = onClose;
@@ -327,7 +387,7 @@ function StatusMenu({ room, booking, top, lang, alignRight, onClose }: { room: s
       aria-label={t(T.board.markAs)}
       data-status-menu
       className={`absolute z-10 w-[190px] rounded-[14px] bg-surface p-2.5 text-fg shadow-[0_14px_30px_-12px_rgba(0,0,0,0.6)] animate-[fade-in_.15s_ease-out] ${alignRight ? "right-1" : "left-1"}`}
-      style={above ? { bottom: ROWS * ROW - top + ((booking.end - booking.start) / SLOT_MS) * ROW + 4 } : { top: top + 4 }}
+      style={above ? { bottom: rows * ROW - top + ((booking.end - booking.start) / SLOT_MS) * ROW + 4 } : { top: top + 4 }}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 text-[12.5px] leading-snug">
@@ -358,25 +418,27 @@ function StatusMenu({ room, booking, top, lang, alignRight, onClose }: { room: s
 }
 
 /**
- * Bookings that just became paid ("booked") after the first snapshot, each for FLASH_MS.
- * A new hold doesn't flash; its payment does.
+ * Bookings to highlight for FLASH_MS: those that just became paid ("booked") after the first snapshot, and those the
+ * owner just moved. A new hold doesn't flash; its payment does. `moved` is the latest moved booking (a new object per move).
  */
-function useNewBookings(bookings: Booking[], live: boolean): Set<string> {
-  const seen = useRef<Map<string, Booking["status"]> | null>(null);
+function useNewBookings(bookings: Booking[], live: boolean): { ids: Set<string>; moved: Booking | null } {
+  const seen = useRef<Map<string, Pick<Booking, "status" | "movedAt">> | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [flash, setFlash] = useState<Set<string>>(() => new Set());
+  const [moved, setMoved] = useState<Booking | null>(null);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   useEffect(() => {
     if (!live) return;
-    const next = new Map(bookings.map((b) => [b.id, b.status]));
-    if (seen.current === null) {
-      seen.current = next;
-      return;
-    }
-    const fresh = bookings.filter((b) => b.status === "booked" && seen.current!.get(b.id) !== "booked").map((b) => b.id);
+    const next = new Map(bookings.map((b) => [b.id, { status: b.status, movedAt: b.movedAt }]));
+    const before = seen.current;
     seen.current = next;
+    if (before === null) return;
+    const paid = bookings.filter((b) => b.status === "booked" && before.get(b.id)?.status !== "booked");
+    const shifted = bookings.filter((b) => b.movedAt !== undefined && b.status !== "cancelled" && before.has(b.id) && before.get(b.id)!.movedAt !== b.movedAt);
+    const fresh = [...paid, ...shifted].map((b) => b.id);
+    if (shifted.length) setMoved(shifted.at(-1)!);
     if (!fresh.length) return;
     setFlash((f) => new Set([...f, ...fresh]));
     timers.current.push(
@@ -384,7 +446,7 @@ function useNewBookings(bookings: Booking[], live: boolean): Set<string> {
     );
   }, [bookings, live]);
 
-  return flash;
+  return useMemo(() => ({ ids: flash, moved }), [flash, moved]);
 }
 
 function CalendarSkeleton() {

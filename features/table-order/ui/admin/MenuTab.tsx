@@ -9,7 +9,8 @@ import { T } from "../../km";
 import { DEFAULT_ART } from "../../menu";
 import type { Category, MenuItem } from "../../types";
 import { artTile, MenuArt } from "../MenuArt";
-import { btnPrimary, btnSecondary, card, Field, input, itemFieldError, MoneyStepper, plusUsd, Segments, Sheet, Switch } from "./parts";
+import { btnPrimary, btnSecondary, card, Field, input, Segments, Sheet, Switch } from "@/components/admin/parts";
+import { itemFieldError, MoneyStepper, plusUsd } from "./parts";
 
 type Props = { room: string; menu: MenuItem[]; lang: Lang; onFail: (f: AdminFail) => boolean };
 
@@ -129,7 +130,7 @@ function EditSheet({ room, item, lang, onFail, onClose }: { room: string; item: 
     <Sheet
       title={t(T.admin.editItem)}
       onClose={onClose}
-      lang={lang}
+      closeLabel={t(T.admin.close)}
       footer={
         <div className="flex flex-col gap-2">
           {error && !["name", "note", "price", "cat", "options", "image"].includes(error.field ?? "") && <p role="alert" className="text-[12.5px] font-medium text-khqr">{t(error.text)}</p>}
@@ -228,7 +229,7 @@ function AddSheet({ room, lang, onFail, onClose }: { room: string; lang: Lang; o
     <Sheet
       title={t(T.admin.addItem)}
       onClose={onClose}
-      lang={lang}
+      closeLabel={t(T.admin.close)}
       footer={
         <div className="flex flex-col gap-2">
           {error && !["name", "price", "cat", "image"].includes(error.field ?? "") && <p role="alert" className="text-[12.5px] font-medium text-khqr">{t(error.text)}</p>}

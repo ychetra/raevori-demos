@@ -5,10 +5,11 @@ import { pick, type Lang } from "@/lib/i18n";
 import { T } from "../../km";
 
 /**
- * The queue admin's building blocks. Styles, Switch, Field and Segments come from the café admin, so both admins look the same.
- * Sheet is a local copy (the café's labels its close button from the café's strings), and MinutesStepper is queue-only.
+ * The queue admin's building blocks. Styles, Switch, Field and Segments are the shared admin parts (components/admin), so
+ * every admin looks the same. Sheet is a local copy with the queue's strings, and MinutesStepper is queue-only.
  */
-export { btnPrimary, btnSecondary, card, Field, input, ppTime, Segments, Switch } from "@/features/table-order/ui/admin/parts";
+export { btnPrimary, btnSecondary, card, Field, input, Segments, Switch } from "@/components/admin/parts";
+export { ppTime } from "@/features/table-order/ui/admin/parts";
 
 /** Whole minutes 1-30: − 3 min +. Typing works too; the server has the last word. */
 export function MinutesStepper({ value, onChange, lang, id, invalid, label }: { value: number; onChange: (v: number) => void; lang: Lang; id?: string; invalid?: boolean; label?: string }) {

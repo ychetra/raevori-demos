@@ -6,13 +6,12 @@ import { MAX_TABLES } from "../../admin";
 import { resetShop, saveSettings, type AdminFail } from "../../admin-api";
 import { T } from "../../km";
 import type { ShopSettings } from "../../types";
-import { btnPrimary, btnSecondary, card, Field, input, Switch } from "./parts";
+import { btnPrimary, btnSecondary, card, Field, halfHours, input, Switch, TimeSelect } from "@/components/admin/parts";
 
 type Props = { room: string; settings: ShopSettings; lang: Lang; onFail: (f: AdminFail) => boolean };
 
-const half = (i: number) => `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`;
-const OPEN_TIMES = Array.from({ length: 48 }, (_, i) => half(i)); // 00:00 … 23:30
-const CLOSE_TIMES = Array.from({ length: 48 }, (_, i) => half(i + 1)); // 00:30 … 24:00
+const OPEN_TIMES = halfHours(0, 48); // 00:00 … 23:30
+const CLOSE_TIMES = halfHours(1, 48); // 00:30 … 24:00
 const isAllDay = (s: Pick<ShopSettings, "open" | "close">) => s.open === "00:00" && s.close === "24:00";
 // Hours a café keeps, for when the owner turns "Open all day" off.
 const DAY_HOURS = { open: "07:00", close: "21:00" };
@@ -134,17 +133,6 @@ export function SettingsTab({ room, settings, lang, onFail }: Props) {
           <button type="button" onClick={() => setConfirmReset(true)} className={`${btnSecondary} mt-3`}>{t(T.admin.reset)}</button>
         )}
       </section>
-    </div>
-  );
-}
-
-function TimeSelect({ id, value, times, onChange, invalid }: { id: string; value: string; times: string[]; onChange: (v: string) => void; invalid: boolean }) {
-  return (
-    <div className="relative">
-      <select id={id} className={`${input} appearance-none pr-9 tabular-nums`} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid}>
-        {times.map((h) => <option key={h} value={h}>{h}</option>)}
-      </select>
-      <svg viewBox="0 0 24 24" className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </div>
   );
 }

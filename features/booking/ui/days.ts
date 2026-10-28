@@ -1,13 +1,14 @@
 import { startOfDay } from "@/features/shop-pulse/time";
 import { availability } from "../availability";
-import type { Booking, BookingStatus, ServiceId, StylistId } from "../types";
+import { DEFAULT_SALON } from "../salon";
+import type { Booking, BookingStatus, SalonConfig, ServiceId, StylistId } from "../types";
 
 /**
  * Index into `days` of the first day with any free time for `service` and `stylist`, so the phone's day strip
- * doesn't open on a full (or already closed) today. Today (0) when no day has a free time.
+ * doesn't open on a full (or already closed) today, in the room's `salon`. Today (0) when no day has a free time.
  */
-export function firstDayWithTimes(bookings: Booking[], service: ServiceId, stylist: StylistId | "any", days: number[], now: number): number {
-  const i = days.findIndex((d) => availability(bookings, service, stylist, d, now).length > 0);
+export function firstDayWithTimes(bookings: Booking[], service: ServiceId, stylist: StylistId | "any", days: number[], now: number, salon: SalonConfig = DEFAULT_SALON): number {
+  const i = days.findIndex((d) => availability(bookings, service, stylist, d, now, salon).length > 0);
   return i < 0 ? 0 : i;
 }
 
