@@ -229,9 +229,9 @@ POST /api/chat  body { history: ChatTurn[] } → { text, cards } | 429 { error: 
 
 Needs `GEMINI_API_KEY` in `.env.local` (owner provides; billing stays off). **Files:** Create `scripts/spike-gemini.ts`, `docs/SPIKE-GEMINI.md`.
 
-- [ ] **Step 1:** Run 12 scripted conversations (6 Khmer, 4 English, 2 mixed) through `runTurn` with the real model; record replies, tool calls, latency, errors, and the current free-tier RPM/RPD for the chosen Flash model from Google's docs.
-- [ ] **Step 1b (from the review):** pin a concrete model id (not `-latest`); set `thinkingConfig` for that model (`thinkingBudget` 0/low on 2.5, `thinkingLevel` LOW/MINIMAL on 3.x) with a matching `maxOutputTokens`; log `finishReason`, `usageMetadata.thoughtsTokenCount` and per-call latency; add a unit test (mocked `generateContent`) that the config is sent. Exit only when no reply is empty/truncated and a 2-tool turn fits well inside 15 s.
-- [ ] **Step 2:** Orchestrator reads the transcripts. Pass = correct tool use in ≥ 11/12, natural Khmer in ≥ 5/6, median latency < 6 s. On fail: stop and ask the owner. On pass: set `CHAT_GLOBAL_DAILY_CAP` below the free daily limit, record it in the doc, commit `docs: gemini spike`.
+- [x] **Step 1:** Run 12 scripted conversations (6 Khmer, 4 English, 2 mixed) through `runTurn` with the real model; record replies, tool calls, latency, errors, and the current free-tier RPM/RPD for the chosen Flash model from Google's docs.
+- [x] **Step 1b (from the review):** pin a concrete model id (not `-latest`); set `thinkingConfig` for that model (`thinkingBudget` 0/low on 2.5, `thinkingLevel` LOW/MINIMAL on 3.x) with a matching `maxOutputTokens`; log `finishReason`, `usageMetadata.thoughtsTokenCount` and per-call latency; add a unit test (mocked `generateContent`) that the config is sent. Exit only when no reply is empty/truncated and a 2-tool turn fits well inside 15 s.
+- [x] **Step 2:** Orchestrator reads the transcripts. Pass = correct tool use in ≥ 11/12, natural Khmer in ≥ 5/6, median latency < 6 s. On fail: stop and ask the owner. On pass: set `CHAT_GLOBAL_DAILY_CAP` below the free daily limit, record it in the doc, commit `docs: gemini spike`.
 
 ### Task 11: Shop Assistant screens — tier: medium
 
@@ -248,7 +248,7 @@ Behaviour from the spec: messenger-style chat, 3 bilingual suggestion chips, pro
 
 - [ ] **Step 1:** Tap a suggestion → a product card appears; continue to an order → `KhqrCard` visible with the right total; route `/api/chat` to return 503 → busy message and "Watch a sample chat" plays the replay; at 360px the page has no horizontal scroll (`scrollWidth <= 360`) with a long Khmer message.
 - [ ] **Step 2:** Run `npm run e2e` → PASS. Commit `test: shop assistant e2e`.
-- [ ] **Step 3 (orchestrator):** With the real key, chat in Khmer and English yourself; review; then hand the owner the URL to try.
+- [x] **Step 3 (orchestrator):** With the real key, chat in Khmer and English yourself; review; then hand the owner the URL to try.
 
 ### Task 13: Home page, SEO, accessibility — tier: medium
 

@@ -1,15 +1,23 @@
-import { GoogleGenAI, type Content, type FunctionDeclaration, type Part } from "@google/genai";
+import { GoogleGenAI, type Content, type FunctionDeclaration, type GenerateContentResponse, type Part, type ThinkingConfig, type ThinkingLevel } from "@google/genai";
 import { COLORS, ZONES } from "./catalog";
 import { T, type CategoryId } from "./km";
 import type { ChatModel, ChatTurn, ModelReply, ToolName, ToolResult } from "./model";
 
 /** Picked in the Gemini spike (Task 10); override with GEMINI_MODEL. */
-export const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
+
+/** Keeps thinking low so a 2-tool turn stays well inside the 15 s budget; 3.x models take a level, 2.5 a token budget. */
+export function geminiConfig(model: string): { thinkingConfig: ThinkingConfig; maxOutputTokens: number } {
+  return model.startsWith("gemini-2.")
+    ? { thinkingConfig: { thinkingBudget: 0 }, maxOutputTokens: 1024 }
+    : { thinkingConfig: { thinkingLevel: "LOW" as ThinkingLevel }, maxOutputTokens: 2048 };
+}
 
 export const SYSTEM_PROMPT = `You are the shop assistant for Mealea Fashion, a clothing and accessories shop in Phnom Penh, Cambodia, chatting with a customer.
 
 Rules:
-- Reply in the customer's language: Khmer if they write Khmer, English if they write English, and match them if they mix. Write natural, polite Khmer, as a friendly Cambodian shop assistant would.
+- Reply in the language of the customer's latest message: Khmer if it is Khmer, English if it is English; if they mix, answer in Khmer. Write natural, polite Khmer, as a friendly Cambodian shop assistant would.
+- When you write Khmer, use only Khmer script, plus product names, sizes and prices as they appear in tool results. Never use Thai, Japanese, Vietnamese, Chinese or any other script.
 - Use the tools for every fact about products, stock, prices, sizes, colours and delivery. Never invent products, prices, stock or delivery times. If a search finds nothing, say the shop doesn't have it and suggest something it does have.
 - The customer sees product, delivery and order cards under your reply, so don't repeat every detail; keep replies under 80 words and friendly.
 - Only talk about the shop, its products, sizes, delivery and orders. Politely decline anything else.
@@ -75,9 +83,25 @@ export function toContents(history: ChatTurn[], results: ToolResult[]): Content[
   return contents;
 }
 
+/** Letters from scripts a Khmer or English reply never needs (Thai, Vietnamese-only Latin, CJK, kana, Hangul, stray combining marks); Flash-Lite sometimes slips them in. */
+const FOREIGN = /[\u0300-\u036f\u0e00-\u0e7f\u1e00-\u1eff\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]+/g;
+
+export const cleanReply = (text: string) => text.replace(FOREIGN, "").replace(/ {2,}/g, " ").replace(/ +([។៕!?.,])/g, "$1").trim();
+
+/** Tells the model which language to answer in, from the customer's latest message, rather than leaving it to guess. */
+function languageNote(history: ChatTurn[]) {
+  const last = history.findLast((t) => t.role === "user")?.text ?? "";
+  const lang = /[\u1780-\u17ff]/.test(last) ? "Khmer" : "English";
+  return `\n\nThe customer's latest message is in ${lang}. Reply in ${lang}.`;
+}
+
 export class GeminiChatModel implements ChatModel {
   private ai?: GoogleGenAI;
-  constructor(private model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL) {}
+  constructor(
+    private model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+    /** For the spike script: sees each raw response (finish reason, token usage). */
+    private onResponse?: (res: GenerateContentResponse) => void,
+  ) {}
 
   async next(history: ChatTurn[], results: ToolResult[], signal?: AbortSignal): Promise<ModelReply> {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -87,11 +111,12 @@ export class GeminiChatModel implements ChatModel {
     const res = await this.ai.models.generateContent({
       model: this.model,
       contents: toContents(history, results),
-      config: { systemInstruction: SYSTEM_PROMPT, tools: [{ functionDeclarations: TOOLS }], temperature: 0.3, maxOutputTokens: 1024, abortSignal: signal },
+      config: { systemInstruction: SYSTEM_PROMPT + languageNote(history), tools: [{ functionDeclarations: TOOLS }], temperature: 0.3, ...geminiConfig(this.model), abortSignal: signal },
     });
+    this.onResponse?.(res);
     const parts = res.candidates?.[0]?.content?.parts ?? [];
     const calls = parts.filter((p) => p.functionCall?.name);
     if (calls.length) return { calls: calls.map((p) => ({ name: p.functionCall!.name as ToolName, args: p.functionCall!.args ?? {}, id: p.functionCall!.id, raw: p })) };
-    return { text: res.text ?? "" };
+    return { text: cleanReply(res.text ?? "") };
   }
 }
