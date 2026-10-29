@@ -261,11 +261,11 @@ Behaviour from the spec: messenger-style chat, 3 bilingual suggestion chips, pro
 
 Needs owner: GitHub repo `ychetra/raevori-demos` with this server's deploy key, Coolify app at `demo.raevori.com` (Dockerfile), env `GEMINI_API_KEY`, `SESSION_SECRET`, `CHAT_GLOBAL_DAILY_CAP`.
 
-- [ ] **Step 1:** Add Cloudflare DNS: `demo` CNAME → `raevori.com`, proxied (token in `~/.cf_token`).
-- [ ] **Step 2:** Push on the owner's go-ahead; poll `https://demo.raevori.com/api/health` until `ok`.
-- [ ] **Step 3:** Run the e2e suite against production (`BASE_URL=https://demo.raevori.com`), including that SSE events arrive through Cloudflare within 1000 ms. Fix buffering if not.
+- [x] **Step 1:** Add Cloudflare DNS: `demo` CNAME → `raevori.com`, proxied (token in `~/.cf_token`).
+- [x] **Step 2:** Push on the owner's go-ahead; poll `https://demo.raevori.com/api/health` until `ok`.
+- [x] **Step 3:** Run the e2e suite against production (`BASE_URL=https://demo.raevori.com`), including that SSE events arrive through Cloudflare within 1000 ms. Fix buffering if not.
 
 ### Task 15: raevori.com integration — tier: medium (in `~/raevori-web`, design by orchestrator)
 
-- [ ] **Step 1:** Add both demos to `WORK` in `lib/site.ts` with "Try the live demo" links; add case-study pages `/work/table-order` and `/work/shop-assistant` (problem, what it does, screenshots, try-it button); add to sitemap, `llms.txt`, JSON-LD.
-- [ ] **Step 2:** `npx tsc --noEmit && npx next build` → success; screenshots at 390 and 1280 reviewed. Commit; push on owner's go-ahead; IndexNow ping for the new URLs.
+- [x] **Step 1:** Add both demos to `WORK` in `lib/site.ts` with "Try the live demo" links; add case-study pages `/work/table-order` and `/work/shop-assistant` (problem, what it does, screenshots, try-it button); add to sitemap, `llms.txt`, JSON-LD.
+- [x] **Step 2:** `npx tsc --noEmit && npx next build` → success; screenshots at 390 and 1280 reviewed. Commit; push on owner's go-ahead; IndexNow ping for the new URLs.

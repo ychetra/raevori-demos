@@ -172,6 +172,7 @@ test("a wrong PIN is refused and logging out asks for the PIN again", async ({ b
   const page = await (await browser.newContext()).newPage();
   await page.goto(`/booking/admin?room=${room}`);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await expect(page.getByRole("heading", { name: "Enter the staff PIN" })).toBeVisible();
   await page.keyboard.type(pin === "0000" ? "1111" : "0000");
   await expect(page.getByText("Wrong PIN. Try again.")).toBeVisible();
   await page.keyboard.type(pin);
