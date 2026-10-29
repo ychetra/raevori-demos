@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { cleanHistory, runTurn } from "@/features/shop-assistant/agent";
+import { T } from "@/features/shop-assistant/km";
 import type { ChatModel, ChatTurn, ModelReply, ToolCall, ToolResult } from "@/features/shop-assistant/model";
 
 const ask: ChatTurn[] = [{ role: "user", text: "Do you have the linen shirt in black, size M?" }];
@@ -59,7 +60,15 @@ describe("runTurn", () => {
     const { model, seen } = scripted({ calls: [call("quote_delivery", { zone: "Daun Penh" })] });
     const res = await runTurn(ask, model);
     expect(seen.length).toBe(4);
-    expect(res).toMatchObject({ text: "", cards: [{ type: "delivery", zone: { id: "daun-penh" } }] });
+    expect(res).toMatchObject({ text: "Here's what I found.", cards: [{ type: "delivery", zone: { id: "daun-penh" } }] });
+  });
+
+  test("an order made in the last step still gets a line telling the customer to pay, in their language", async () => {
+    const order = call("create_order", { items: [{ productId: "linen-shirt", color: "black", size: "M", qty: 1 }], zone: "Toul Kork", name: "Sophea" });
+    const { model } = scripted({ calls: [order] });
+    const res = await runTurn([{ role: "user", text: "យកមួយ ដឹកទៅទួលគោក" }], model);
+    expect(res).toMatchObject({ text: T.ui.orderReady.km });
+    expect("cards" in res && res.cards.some((c) => c.type === "order")).toBe(true);
   });
 
   test("looping with nothing to show is busy", async () => {

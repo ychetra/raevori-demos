@@ -99,6 +99,8 @@ export const T = {
     subtitle: { en: "AI assistant · replies instantly", km: "ជំនួយការ AI · ឆ្លើយតបភ្លាមៗ" },
     greeting: { en: "Hi! I'm Mealea Fashion's assistant. Ask me about clothes, sizes, stock or delivery, in Khmer or English.", km: "សួស្តី! ខ្ញុំជាជំនួយការរបស់ Mealea Fashion។ សួរខ្ញុំពីសម្លៀកបំពាក់ ទំហំ ស្តុក ឬការដឹកជញ្ជូន ជាភាសាខ្មែរ ឬអង់គ្លេសក៏បាន។" },
     tryAsking: { en: "Try asking", km: "សាកសួរ" },
+    orderReady: { en: "Your order is ready. Pay with the KHQR card below.", km: "ការកម្មង់របស់អ្នករួចរាល់ហើយ។ សូមបង់ប្រាក់តាមកាត KHQR ខាងក្រោម។" },
+    foundThese: { en: "Here's what I found.", km: "នេះជាអ្វីដែលខ្ញុំរកឃើញ។" },
     placeholder: { en: "Message Mealea Fashion…", km: "សរសេរសារទៅ Mealea Fashion…" },
     send: { en: "Send", km: "ផ្ញើ" },
     footnote: { en: "Demo · Don't share personal information", km: "សាកល្បង · សូមកុំចែករំលែកព័ត៌មានផ្ទាល់ខ្លួន" },

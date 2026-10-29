@@ -1,6 +1,7 @@
 import { checkStock, createOrder, quoteDelivery, searchProducts, ToolError } from "./tools";
 import type { Card, ChatModel, ChatTurn, ToolCall, ToolResult } from "./model";
 import { COLORS } from "./catalog";
+import { T } from "./km";
 
 const MAX_TURNS = 12;
 const MAX_TURN_CHARS = 600;
@@ -74,6 +75,13 @@ export const cardsFor = (calls: ToolCall[]): Card[] => calls.reduce<Card[]>((car
 class Timeout extends Error {}
 
 /** One customer message: ask the model, run the tools it asks for, repeat up to `maxSteps`. Any failure or timeout is "busy". */
+/** A line for cards the model ran out of steps to describe, so a reply is never cards alone. Costs no model call. */
+function cardsOnlyText(history: ChatTurn[], cards: Card[]) {
+  const last = history.findLast((t) => t.role === "user")?.text ?? "";
+  const line = cards.some((c) => c.type === "order") ? T.ui.orderReady : T.ui.foundThese;
+  return /[\u1780-\u17ff]/.test(last) ? line.km : line.en;
+}
+
 export async function runTurn(
   history: ChatTurn[],
   model: ChatModel,
@@ -94,7 +102,8 @@ export async function runTurn(
       const reply = await Promise.race([model.next(history, results, abort.signal), deadline]);
       if ("text" in reply) {
         const text = reply.text.trim();
-        return text || cards.length ? { text, cards } : { error: "busy" };
+        if (text) return { text, cards };
+        return cards.length ? { text: cardsOnlyText(history, cards), cards } : { error: "busy" };
       }
       for (const call of reply.calls) {
         const { result, cards: fresh } = executeTool(call);
@@ -102,7 +111,7 @@ export async function runTurn(
         cards = collect(cards, fresh);
       }
     }
-    return cards.length ? { text: "", cards } : { error: "busy" };
+    return cards.length ? { text: cardsOnlyText(history, cards), cards } : { error: "busy" };
   } catch {
     return { error: "busy" };
   } finally {
